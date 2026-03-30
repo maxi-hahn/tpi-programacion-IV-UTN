@@ -1,1 +1,5 @@
-# tpi-programacion-IV-UTN
+# TPI Programacion IV UTN 
+# integrantes:
+ Máximo Hahn
+ Augusto Magi
+ Nahuel Dallavalle
