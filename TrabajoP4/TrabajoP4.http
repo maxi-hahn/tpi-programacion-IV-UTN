@@ -1,0 +1,6 @@
+@TrabajoP4_HostAddress = http://localhost:5123
+
+GET {{TrabajoP4_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
