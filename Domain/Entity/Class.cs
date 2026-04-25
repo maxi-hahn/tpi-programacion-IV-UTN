@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using static Domain.Entity.Time;
+using static Domain.Entity.Schedule;
 
 
 namespace Domain.Entity
@@ -13,7 +13,7 @@ namespace Domain.Entity
         public string Name { get; set; } = string.Empty;
 
         public int Max_Users { get; set; }
-        public List<HorarioClase> Horarios { get; set; } = new();
+        public List<Schedule> schedules { get; set; } = new();
 
     }
 

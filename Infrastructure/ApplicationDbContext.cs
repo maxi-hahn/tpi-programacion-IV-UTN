@@ -1,10 +1,13 @@
-﻿using Domain.Entity;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Domain.Entity;
 using Domain.Entity.UsersChild;
 using Microsoft.EntityFrameworkCore;
 
-namespace TrabajoP4.Infrastructure.Persistance
+namespace Trabajop4.Infrastructure
 {
-    public class GestionComplejoDbContext : DbContext
+    public class ApplicationDbContext : DbContext
     {
         public DbSet<Class> Classes { get; set; }   
         public DbSet<Schedule> Scheduless { get; set; }
@@ -13,7 +16,7 @@ namespace TrabajoP4.Infrastructure.Persistance
         public DbSet<Admin> Admins { get; set; }
         public DbSet<SysAdmin> SysAdmins { get; set; }
 
-        public GestionComplejoDbContext(DbContextOptions<GestionComplejoDbContext> options) : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
 
         }  
