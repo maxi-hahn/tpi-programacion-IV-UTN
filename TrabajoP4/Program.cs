@@ -10,8 +10,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(
     options => options.UseMySql(
-    builder.Configuration.GetConnectionString("ConnectionString"),
-    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("ConnectionString")))
+    builder.Configuration.GetConnectionString("DefaultConnection"),
+    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")))
 );
 var app = builder.Build();
 
