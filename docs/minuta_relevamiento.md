@@ -1,50 +1,104 @@
-Minuta de relevamiento - Proyecto TPI
+# Minuta de Relevamiento
+## Sistema de Gestión de Gimnasio
 
-1. Tema
+---
 
-Aplicación de gestión de clases (gimnasio/centro deportivo) para administrar usuarios, planes, sedes, clases y horarios. Permite a los clientes inscribirse en clases, a los administradores gestionar la oferta y ver reportes básicos.
+**Fecha:** Mayo 2026  
+**Tipo de documento:** Minuta de Relevamiento  
+**Proyecto:** TPI - Aplicación de Gestión de Gimnasio
 
-2. Objetivo
+---
 
-Desarrollar una aplicación web que permita:
-- Gestionar usuarios (clientes, administradores, sysadmin).
-- Definir planes con límites de clases y asignarlos a usuarios.
-- Administrar sedes y aulas donde se dictan las clases.
-- Crear y programar clases con cupo y horarios.
-- Permitir inscripciones de usuarios a clases (control de cupo).
+## 1. Descripción de la Temática
 
-3. Funcionalidades principales
+La aplicación tiene como objetivo gestionar las operaciones de un gimnasio con múltiples sedes. Permite administrar los usuarios (clientes y administradores), los planes de membresía, las clases ofrecidas, sus horarios y la inscripción de clientes a dichas clases.
 
-- Autenticación y autorización de usuarios por tipo (cliente, admin, sysadmin).
-- CRUD para Planes, Sedes, Clases y Horarios.
-- Gestión de inscripciones: crear y cancelar inscripciones, verificar cupo y reglas del plan.
-- Visualización de horarios por sede y por clase.
-- Reportes básicos: ocupación de clases, inscripciones por usuario, ingresos por planes.
+El sistema apunta a digitalizar y centralizar la administración del gimnasio, reemplazando el registro manual y facilitando tanto la gestión interna como la experiencia del cliente.
 
-4. Requisitos no funcionales
+---
 
-- Persistencia en base de datos MySQL.
-- API RESTful con .NET 10 (ASP.NET Core).
-- Documentación mínima con diagramas y README en la carpeta docs.
-- Permisos mínimos: no usar root para la app — crear usuario de BD dedicado.
+## 2. Actores del Sistema
 
-5. Entidades principales (resumen)
+- **Administrador:** gestiona sedes, clases, horarios, usuarios y planes.
+- **Cliente (Usuario):** se registra, elige un plan, se inscribe en clases y consulta su actividad.
 
-- Usuario: id_usuario, nombre, email, tipo_usuario, estado, password, plan_id, dni.
-- Plan: id_plan, nombre, valor, clases_max.
-- Sede: id_sede, nombre, direccion.
-- Clase: id_clase, nombre, cupo_maximo, id_sede.
-- HorariosClase: id, dia, hora_inicio, hora_fin, id_clase.
-- Inscripcion: id_inscripcion, cliente_id, clase_id, fecha_inscripcion.
+---
 
-6. Observaciones
+## 3. Funcionalidades Principales
 
-- Se recomienda usar un usuario de base de datos específico para la app y no root.
-- El diagrama de clases se encuentra en docs/diagrama_clases.mmd en formato Mermaid para fácil visualización.
+### 3.1 Gestión de Usuarios
+- Registro de nuevos usuarios con datos personales (nombre, email, DNI, contraseña).
+- Asignación de tipo de usuario: cliente o administrador.
+- Activación/desactivación del estado de un usuario.
+- Asociación de cada usuario a un plan de membresía.
 
-7. Entrega
+### 3.2 Gestión de Planes
+- Creación y edición de planes (nombre, precio, cantidad máxima de clases permitidas).
+- Visualización de planes disponibles.
+- Asignación de un plan a un usuario.
 
-- Link al repositorio: (poner link del repositorio en la entrega final).
+### 3.3 Gestión de Sedes
+- Alta, baja y modificación de sedes.
+- Cada sede posee nombre y dirección.
+- Las clases están asociadas a una sede específica.
 
+### 3.4 Gestión de Clases
+- Creación de clases con nombre, cupo máximo y sede asignada.
+- Definición de horarios por clase (día, hora de inicio y hora de fin).
+- Visualización de clases disponibles por sede y horario.
 
+### 3.5 Inscripción a Clases
+- El cliente puede inscribirse a una o más clases disponibles según su plan.
+- El sistema valida que no se supere el cupo máximo de la clase.
+- El sistema valida que el cliente no exceda el límite de clases de su plan.
+- Registro de cada inscripción en una tabla auxiliar (Inscripcion) que vincula cliente y clase.
 
+### 3.6 Consultas y Reportes (opcionales / deseables)
+- Listado de clases con sus inscriptos.
+- Historial de clases de un cliente.
+- Ocupación de cada clase en relación al cupo máximo.
+
+---
+
+## 4. Restricciones y Reglas de Negocio
+
+- Un usuario solo puede tener un plan activo a la vez.
+- Un cliente no puede inscribirse a más clases de las que permite su plan.
+- Cada clase tiene un cupo máximo que no puede superarse.
+- Las clases pertenecen a una sola sede.
+- Los horarios están vinculados directamente a una clase.
+
+---
+
+## 5. Entidades Identificadas
+
+| Entidad        | Descripción |
+|----------------|-------------|
+| `Plan`         | Define los tipos de membresía disponibles en el gimnasio. |
+| `Usuario`      | Representa a los clientes y administradores del sistema. |
+| `Clase`        | Actividades físicas ofrecidas por el gimnasio. |
+| `HorariosClase`| Días y horarios en que se dicta cada clase. |
+| `Sede`         | Ubicaciones físicas del gimnasio. |
+| `Inscripcion`  | Tabla auxiliar que registra la relación N:M entre usuarios y clases. |
+
+---
+
+## 6. Relaciones entre Entidades
+
+- Un **Plan** puede tener muchos **Usuarios** (1:N).
+- Un **Usuario** puede inscribirse a muchas **Clases**, y una **Clase** puede tener muchos **Usuarios** (N:M → resuelta con la entidad `Inscripcion`).
+- Una **Clase** pertenece a una **Sede** (N:1).
+- Una **Clase** puede tener muchos **HorariosClase** (1:N).
+
+---
+
+## 7. Tecnologías Previstas
+
+- **Backend:** A definir por el grupo (ej. Node.js, Spring Boot, etc.)
+- **Frontend:** A definir por el grupo (ej. React, Angular, etc.)
+- **Base de datos:** Relacional (ej. MySQL, PostgreSQL)
+- **Control de versiones:** Git + GitHub/GitLab
+
+---
+
+*Documento elaborado como parte del Trabajo Práctico Integrador (TPI).*
