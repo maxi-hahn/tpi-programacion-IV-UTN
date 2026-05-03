@@ -17,6 +17,8 @@ namespace Presentation.Controller
             _service = service;
         }
 
+
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Client>>> Get()
         {
@@ -35,6 +37,12 @@ namespace Presentation.Controller
         [HttpPost]
         public async Task<ActionResult<Client>> Post(Client client)
         {
+
+            if (client == null) return NotFound();
+            if (string.IsNullOrEmpty(client.Name)) return BadRequest("Name is required.");
+            if (string.IsNullOrEmpty(client.Email)) return BadRequest("Email is required.");
+            if (string.IsNullOrEmpty(client.Password)) return BadRequest("Password is required.");
+
             var created = await _service.Create(client);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }

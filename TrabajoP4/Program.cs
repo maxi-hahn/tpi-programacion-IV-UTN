@@ -1,4 +1,7 @@
 using Application.Services;
+using Application.Tools;
+using Domain.Interface.UsersInterface;
+using Infrastructure.Service;
 using Microsoft.EntityFrameworkCore;
 using Trabajop4.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +12,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddDbContext<ApplicationDbContext>(
    options => options.UseSqlServer(
    builder.Configuration.GetConnectionString("DefaultConnection"))
