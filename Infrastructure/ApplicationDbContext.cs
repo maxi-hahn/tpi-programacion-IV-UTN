@@ -10,7 +10,7 @@ namespace Trabajop4.Infrastructure
     public class ApplicationDbContext : DbContext
     {
         public DbSet<Class> Classes { get; set; }   
-        public DbSet<Schedule> Scheduless { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Plan> Plans { get; set; }
         public DbSet<Client> Clients { get; set; }
         public DbSet<Admin> Admins { get; set; }
