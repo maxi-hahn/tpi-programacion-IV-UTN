@@ -8,6 +8,6 @@ namespace Domain.Interface.UsersInterface
 {
     public interface IClientRepository
     {
-        List<Client> GetAll();
+        Task<IEnumerable<Client>> GetAll();
     }
 }

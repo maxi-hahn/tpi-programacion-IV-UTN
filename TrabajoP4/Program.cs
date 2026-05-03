@@ -1,5 +1,6 @@
-using Trabajop4.Infrastructure;
+using Application.Services;
 using Microsoft.EntityFrameworkCore;
+using Trabajop4.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddDbContext<ApplicationDbContext>(
    options => options.UseSqlServer(
    builder.Configuration.GetConnectionString("DefaultConnection"))

@@ -1,84 +1,58 @@
-﻿using Domain.Entity;
+﻿
 using Domain.Entity.UsersChild;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Trabajop4.Infrastructure;
+using Application.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Presentation.Controller
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ClientController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IClientService _service;
 
-        public ClientController(ApplicationDbContext context)
+        public ClientController(IClientService service)
         {
-            _context = context;
+            _service = service;
         }
 
-   
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Client>>> Get()
         {
-            return await _context.Clients.ToListAsync();
+            return Ok(await _service.GetAll());
         }
-
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Client>> GetById(Guid id)
         {
-            var client = await _context.Clients.FindAsync(id);
+            var client = await _service.GetById(id);
+            if (client == null) return NotFound();
 
-            if (client == null)
-                return NotFound();
-
-            return client;
+            return Ok(client);
         }
-
 
         [HttpPost]
         public async Task<ActionResult<Client>> Post(Client client)
         {
-            client.Id = Guid.NewGuid();
-
-
-            _context.Clients.Add(client);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = client.Id }, client);
+            var created = await _service.Create(client);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
-    
-
-       [HttpPatch("{id}")]
-        public async Task<IActionResult> Patch(Guid id, Client updatedClient)
+            
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(Guid id, Client client)
         {
-            var client = await _context.Clients.FindAsync(id);
-
-            if (client == null)
-                return NotFound();
-
-            // Ajustá según tus propiedades reales
-            client.Name = updatedClient.Name ?? client.Name;
-            client.Email = updatedClient.Email ?? client.Email;
-
-            await _context.SaveChangesAsync();
+            var updated = await _service.Update(id, client);
+            if (!updated) return NotFound();
 
             return NoContent();
         }
 
-        // ✅ DELETE
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var client = await _context.Clients.FindAsync(id);
-
-            if (client == null)
-                return NotFound();
-
-            _context.Clients.Remove(client);
-            await _context.SaveChangesAsync();
+            var deleted = await _service.Delete(id);
+            if (!deleted) return NotFound();
 
             return NoContent();
         }
