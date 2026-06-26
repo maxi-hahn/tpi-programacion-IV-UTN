@@ -1,3 +1,4 @@
+using Application.Application.Interfaces;
 using Application.Interfaces;
 using Application.Services;
 using Domain.Interface;
@@ -6,6 +7,8 @@ using Infrastructure;
 using Infrastructure.Repositories;
 using Infrastructure.Repository;
 using Infrastructure.Service;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -97,8 +100,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+    })
+    .AddCookie()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Google:ClientSecret"];
 
+        options.Scope.Add("https://www.googleapis.com/auth/calendar");
+        options.Scope.Add("https://www.googleapis.com/auth/calendar.events");
 
+        options.AccessType = "offline";
+        options.SaveTokens = true;
+    });
+builder.Services.AddHttpClient<IGoogleCalendarService, GoogleCalendarService>();
 // --- PIPELINE DE LA APLICACIÓN ---
 
 var app = builder.Build();

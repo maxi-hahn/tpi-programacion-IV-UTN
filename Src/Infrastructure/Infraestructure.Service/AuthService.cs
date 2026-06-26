@@ -46,7 +46,7 @@ namespace Infraestructure.Service
             if (existingUser != null)
             {
                 throw new ConflictException(
-                 "Invalid email format");
+                 "Email already exists");
             }
 
             var hashedPassword = _hasher.Hash(request.Password);
@@ -70,7 +70,7 @@ namespace Infraestructure.Service
 
             //MOdificar el link para que apunte a la ruta correcta en el frontend
 
-            var verificationLink = $"https://localhost:7001/api/clients/verify-email?token={verificationToken}";
+            var verificationLink = $"https://localhost:5123/api/clients/verify-email?token={verificationToken}";
             await _emailService.SendEmailAsync(
                 newUser.Email,
                 "Verifica tu cuenta",
@@ -117,10 +117,10 @@ namespace Infraestructure.Service
 
         public async Task<bool> VerifyEmail(string token)
         {
-            
+
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.VerificationToken == token);
-            
+
             if (user == null)
                 throw new NotFoundException("Invalid verification token");
             if (user.VerificationTokenExpiration == null ||

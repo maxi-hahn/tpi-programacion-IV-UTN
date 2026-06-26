@@ -19,11 +19,16 @@ namespace Infrastructure.Repositories
         {
             return await _context.Schedules.ToListAsync();
         }
-
         public async Task<Schedule?> GetById(Guid id)
         {
             return await _context.Schedules.FindAsync(id);
         }
+        public async Task<List<Schedule>> GetByClassId(Guid classId)
+        {
+            return await _context.Schedules
+                .Where(s => s.Id_Class == classId && s.IsActive)
+                .ToListAsync();
+        }  
 
         public async Task<Schedule> Create(Schedule schedule)
         {

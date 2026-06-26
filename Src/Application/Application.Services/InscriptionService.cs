@@ -1,4 +1,5 @@
-﻿using Application.Dtos.Requests;
+﻿using Application.Application.Interfaces;
+using Application.Dtos.Request;
 using Application.Dtos.Responses;
 using Application.Interfaces;
 using Domain.Entity;
@@ -11,15 +12,19 @@ namespace Application.Services
         private readonly IInscriptionRepository _inscriptionRepo;
         private readonly IClassRepository _classRepo;
         private readonly IUserRepository _userRepo;
+        private readonly IScheduleRepository _scheduleRepo;
 
         public InscriptionService(
             IInscriptionRepository inscriptionRepo,
             IClassRepository classRepo,
-            IUserRepository userRepo)
+            IUserRepository userRepo,
+            IScheduleRepository scheduleRepo
+            )
         {
             _inscriptionRepo = inscriptionRepo;
             _classRepo = classRepo;
             _userRepo = userRepo;
+            _scheduleRepo = scheduleRepo;
         }
 
         public async Task<InscriptionResponse?> Inscribe(InscriptionRequest request)
@@ -55,8 +60,25 @@ namespace Application.Services
                 IsActive = true
             };
 
+
             await _inscriptionRepo.Add(inscription);
             await _inscriptionRepo.Save();
+
+            return new InscriptionResponse
+            {
+                Id = inscription.Id,
+                UserId = inscription.UserId,
+                ClassId = inscription.ClassId,
+                InscriptionDate = inscription.InscriptionDate,
+                IsActive = inscription.IsActive,
+            };
+        }
+        public async Task<InscriptionResponse?> GetById(Guid id)
+        {
+            var inscription = await _inscriptionRepo.GetById(id);
+
+            if (inscription == null)
+                return null;
 
             return new InscriptionResponse
             {

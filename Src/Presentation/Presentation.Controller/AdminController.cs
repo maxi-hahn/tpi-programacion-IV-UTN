@@ -147,7 +147,7 @@ namespace Presentation.Presentation.Controller
             return Ok(result);
         }
 
-        [Authorize]
+        [Authorize()]
         [HttpDelete("deleteClass/{id}")]
         public async Task<ActionResult<IEnumerable<Class?>>> DeleteClass(Guid id)
         {

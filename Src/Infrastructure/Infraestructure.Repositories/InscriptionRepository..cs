@@ -18,7 +18,11 @@ namespace Infrastructure.Repositories
         {
             return await _context.Inscriptions.ToListAsync();
         }
-
+        public async Task<Inscription?> GetById(Guid id)
+        {
+            return await _context.Inscriptions
+                .FirstOrDefaultAsync(i => i.Id == id);
+        }
         public async Task<IEnumerable<Inscription>> GetByClassId(Guid classId)
         {
             return await _context.Inscriptions

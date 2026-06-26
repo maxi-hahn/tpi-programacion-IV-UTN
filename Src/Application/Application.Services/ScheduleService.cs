@@ -17,10 +17,13 @@ namespace Application.Services
         {
             return await _repository.GetAll();
         }
-
         public async Task<Schedule?> GetById(Guid id)
         {
             return await _repository.GetById(id);
+        }
+        public async Task<List<Schedule>> GetByClassId(Guid classId)
+        {
+            return await _repository.GetByClassId(classId);
         }
 
         public async Task<Schedule> Create(Schedule schedule)

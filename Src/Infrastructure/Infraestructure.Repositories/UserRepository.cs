@@ -1,5 +1,5 @@
 ﻿using Application.Dtos.Responses;
-using Application.Dtos.Requests;
+using Application.Dtos.Request;
 using Domain.Entity;
 using Domain.Interface;
 using Microsoft.EntityFrameworkCore;
