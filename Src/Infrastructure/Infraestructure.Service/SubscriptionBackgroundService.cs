@@ -1,4 +1,4 @@
-﻿using Application.Application.Interfaces;
+﻿using Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 namespace Infrastructure.Service

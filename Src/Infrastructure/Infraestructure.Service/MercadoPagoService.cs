@@ -7,8 +7,6 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace Infrastructure.Service
 {
     public class MercadoPagoService : IMercadoPagoService

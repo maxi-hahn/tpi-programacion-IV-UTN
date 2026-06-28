@@ -1,7 +1,7 @@
 ﻿using Domain.Entity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Trabajop4.Infrastructure
+namespace Infrastructure
 {
     public class ApplicationDbContext : DbContext
     {

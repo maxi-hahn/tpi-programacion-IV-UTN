@@ -1,13 +1,9 @@
 ﻿using Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
-using System.IdentityModel.Tokens.Jwt;
 
-namespace Infraestructure.Service
+namespace Infrastructure.Service
 {
     public class UserContext : IUserContext
     {

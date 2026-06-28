@@ -1,24 +1,19 @@
-using Application.Application.Interfaces;
+using Domain.Interface;
 using Application.Interfaces;
 using Application.Services;
-using Domain.Interface;
-using Infraestructure.Service;
+using Infrastructure.Service;
 using Infrastructure;
 using Infrastructure.Repositories;
-using Infrastructure.Repository;
-using Infrastructure.Service;
+using Presentation.Authorization;
+using Presentation.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Polly;
-using Presentation.Authorization;
-using Presentation.Middlewares;
 using System.Net.Http.Headers;
 using System.Text;
-using Trabajop4.Infrastructure;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,7 +78,7 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 //Servicios de utilidad
 builder.Services.AddScoped<DatabaseSeeder>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ISubscriptionService,SubscriptionService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
 builder.Services.AddHostedService<SubscriptionBackgroundService>();
 
@@ -119,8 +114,7 @@ builder.Services.AddHttpClient<IMercadoPagoService, MercadoPagoService>(client =
     client.BaseAddress = new Uri("https://api.mercadopago.com/");
     client.DefaultRequestHeaders.Accept.Add(
         new MediaTypeWithQualityHeaderValue("application/json"));
-})
-.AddResilienceHandler("mercadopago", builder =>
+}).AddResilienceHandler("mercadopago", builder =>
 {
     // Retry (3 intentos, backoff exponencial)
     builder.AddRetry(new HttpRetryStrategyOptions

@@ -16,7 +16,7 @@ namespace Application.Services
 
         public async Task<List<Schedule>> GetAll()
         {
-            return await _repository.GetAll();
+            return (List<Schedule>)await _repository.GetAll();
         }
 
         public async Task<Schedule?> GetById(Guid id)
