@@ -87,7 +87,7 @@ namespace Presentation.Controller
         public virtual async Task<ActionResult<IEnumerable<T>>> Get()
         {
             var users = await _service.GetAll();
-            // Filtramos para devolver solo el tipo específico (Client, Admin, etc.)
+            // devolver solo el tipo específico (Client, Admin, etc.)
             return Ok(users.OfType<T>());
         }
 
@@ -128,7 +128,7 @@ namespace Presentation.Controller
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, (T)created);
         }
 
-        //para admin manejar un usuario
+
         [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPatch("{id}")]
         public virtual async Task<IActionResult> Patch(Guid id, T user)

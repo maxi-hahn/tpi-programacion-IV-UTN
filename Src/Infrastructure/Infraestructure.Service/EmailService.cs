@@ -1,5 +1,4 @@
 ﻿using Application.Interfaces;
-using Infrastructure;
 using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
