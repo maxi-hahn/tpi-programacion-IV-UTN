@@ -1,0 +1,17 @@
+{
+
+  "Jwt": {
+    "Key": "",
+    "Issuer": "GymApi",
+    "Audience": "GymApiUsers",
+    "ExpirationMinutes": 60
+  },
+
+  "EmailSettings": {
+    "SmtpServer": "smtp.gmail.com",
+    "Port": 587,
+    "SenderName": "Gym",
+    "SenderEmail": "tuemail@gmail.com",
+    "Password": ""
+  }
+}

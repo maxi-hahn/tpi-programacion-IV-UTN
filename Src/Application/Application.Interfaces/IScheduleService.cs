@@ -11,6 +11,6 @@ namespace Application.Interfaces
 
         Task<bool> Update(Guid id, Schedule updatedSchedule);
 
-        Task<bool> Delete(Schedule deleteSchedule);
+        Task<bool> Delete(Guid id);
     }
 }

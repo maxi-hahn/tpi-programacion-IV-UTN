@@ -10,7 +10,6 @@ public class UserService : IUserService
     protected readonly IUserRepository _repo;
     protected readonly IPasswordHasherService _hasher;
     protected readonly IUserContext _userContext;
-
     public UserService(IUserRepository repo, IPasswordHasherService hasher, IUserContext userContext)
     {
         _repo = repo;

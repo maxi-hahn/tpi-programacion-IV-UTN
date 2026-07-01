@@ -14,5 +14,8 @@ namespace Domain.Entity
 
         public int Max_Class { get; set; }
 
+        public bool IsUnlimited { get; set; } = false;
+
+
     }
 }

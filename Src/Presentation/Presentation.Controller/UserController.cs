@@ -4,10 +4,9 @@ using Application.Interfaces;
 using Domain.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Presentation.Authorization;
 
 namespace Presentation.Controller
-
-    //Agregar cambiar contraseña por mail
 {
     [ApiController]
     // Usamos esta ruta para que los hijos hereden la ruta base o la definan ellos
@@ -24,7 +23,7 @@ namespace Presentation.Controller
         }
 
         [AllowAnonymous]
-        [HttpPost("singin")]
+        [HttpPost("signin")]
         public async Task<ActionResult<SingInResponse>> SingIn(
             [FromBody] SingInRequest request)
         {
@@ -45,8 +44,7 @@ namespace Presentation.Controller
 
         [AllowAnonymous]
         [HttpGet("verify-email")]
-        public async Task<IActionResult> VerifyEmail(
-            [FromQuery] string token)
+        public async Task<IActionResult> VerifyEmail([FromQuery] string token)
         {
             await _authService.VerifyEmail(token);
 
@@ -76,19 +74,21 @@ namespace Presentation.Controller
         [AllowAnonymous]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(
-            [FromBody] ResetPasswordRequest request)
+            [FromQuery] string token,
+            [FromBody] string NewPassword)
         {
-            await _authService.ResetPassword(request.Token, request.NewPassword);
+            await _authService.ResetPassword(token, NewPassword);
 
             return Ok("Contraseña actualizada correctamente.");
         }
 
-        [AllowAnonymous]
+        
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpGet]
         public virtual async Task<ActionResult<IEnumerable<T>>> Get()
         {
             var users = await _service.GetAll();
-            // Filtramos para devolver solo el tipo específico (Client, Admin, etc.)
+            // devolver solo el tipo específico (Client, Admin, etc.)
             return Ok(users.OfType<T>());
         }
 
@@ -113,7 +113,7 @@ namespace Presentation.Controller
             }));
         }
 
-        [Authorize]
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpGet("{id}")]
         public virtual async Task<ActionResult<T>> GetById(Guid id)
         {
@@ -129,8 +129,8 @@ namespace Presentation.Controller
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, (T)created);
         }
 
-        //para admin manejar un usuario
-        [Authorize]
+
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPatch("{id}")]
         public virtual async Task<IActionResult> Patch(Guid id, T user)
         {
@@ -138,7 +138,8 @@ namespace Presentation.Controller
 
             return NoContent();
         }
-        [Authorize]
+
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpDelete("{id}")]
         public virtual async Task<IActionResult> Delete(Guid id)
         {

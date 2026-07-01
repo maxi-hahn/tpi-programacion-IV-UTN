@@ -1,0 +1,76 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+name: Build and deploy ASP.Net Core app to Azure Web App - Gym-tup6
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - name: Build with dotnet
+        run: dotnet build Src/Presentation/Presentation.csproj --configuration Release
+      - name: dotnet publish
+        run: dotnet publish Src/Presentation/Presentation.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A4B28E5ABC66408B85CFC069BDE85883 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_840A464AD0374766AA29EDE8986F3B54 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_306665FA857143EA84DA1018613BC7A6 }}
+
+      - name: Set App Settings in Azure
+        shell: pwsh
+        env:
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
+          MERCADOPAGO_ACCESS_TOKEN: ${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}
+          MERCADOPAGO_NOTIFICATION_URL: ${{ secrets.MERCADOPAGO_NOTIFICATION_URL }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+        run: |
+          $appName = "Gym-tup6"
+          $rg = "ProyectoGymTup6"
+          az webapp config appsettings set --name $appName --resource-group $rg --settings "Jwt__Key=$env:JWT_KEY"
+          az webapp config appsettings set --name $appName --resource-group $rg --settings "SeedAdmin__Password=$env:SEED_ADMIN_PASSWORD"
+          az webapp config appsettings set --name $appName --resource-group $rg --settings "EmailSettings__Password=$env:EMAIL_PASSWORD"
+          az webapp config appsettings set --name $appName --resource-group $rg --settings "ConnectionStrings__DefaultConnection=$env:CONNECTION_STRING"
+          az webapp config appsettings set --name $appName --resource-group $rg --settings "MercadoPago__AccessToken=$env:MERCADOPAGO_ACCESS_TOKEN"
+          az webapp config appsettings set --name $appName --resource-group $rg --settings "MercadoPago__NotificationUrl=$env:MERCADOPAGO_NOTIFICATION_URL"
+          az webapp config appsettings set --name $appName --resource-group $rg --settings "AppSettings__BaseUrl=$env:APP_BASE_URL"
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'Gym-tup6'
+          slot-name: 'Production'
+          package: .

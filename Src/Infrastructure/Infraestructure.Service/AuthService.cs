@@ -1,18 +1,23 @@
-﻿using Application.Dtos.Request;
+﻿using Application.Constants;
+using Application.Dtos.Request;
 using Application.Dtos.Responses;
 using Application.Exceptions;
 using Application.Interfaces;
+using Application.Templates;
 using Domain.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.Buffers.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
-using Trabajop4.Infrastructure;
 
-namespace Infraestructure.Service
+
+
+
+namespace Infrastructure.Service
 {
     public class AuthService : IAuthService
     {
@@ -32,14 +37,22 @@ namespace Infraestructure.Service
         }
 
         //Agregar validaciones de registro
+
         public async Task<AuthResponse?> SingUp(SingUpRequest request)
         {
+            var baseUrl = _configuration["AppSettings:BaseUrl"];
+
 
             string patron = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             if (!Regex.IsMatch(request.Email, patron))
             {
                 throw new ValidationException(
                     "Invalid email format");
+            }
+            if (request.Password.Length < 8)
+            {
+                throw new ValidationException(
+                    "Password must be at least 8 characters");
             }
             var existingUser = await _context.Users
                 .FirstOrDefaultAsync(c => c.Email == request.Email);
@@ -69,16 +82,15 @@ namespace Infraestructure.Service
             await _context.SaveChangesAsync();
 
             //MOdificar el link para que apunte a la ruta correcta en el frontend
-
+            // var verificationLink = $"{baseUrl}/api/clients/verify-email?token={verificationToken}"; # PRODUCTION
             var verificationLink = $"https://localhost:5123/api/clients/verify-email?token={verificationToken}";
             await _emailService.SendEmailAsync(
-                newUser.Email,
-                "Verifica tu cuenta",
-                $@"
-                <h2>Bienvenido al gimnasio</h2>
-                <p>Hace click en el siguiente enlace para verificar tu cuenta:</p>
-                <a href='{verificationLink}'> Verificar cuenta</a>"
-                );
+                 newUser.Email,
+                 EmailSubjects.VerifyEmail,
+                 EmailTemplates.VerifyAccount(
+                     newUser.Name,
+                     verificationLink)
+                 );
 
             return new AuthResponse
             {
@@ -138,6 +150,8 @@ namespace Infraestructure.Service
 
         public async Task<bool> ResendVerificationEmail(string email)
         {
+            var baseUrl = _configuration["AppSettings:BaseUrl"];
+
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == email);
 
@@ -154,17 +168,16 @@ namespace Infraestructure.Service
 
             await _context.SaveChangesAsync();
 
-            var verificationLink =
-                $"https://localhost:7001/api/clients/verify-email?token={verificationToken}";
+            var verificationLink = $"{baseUrl}/api/clients/verify-email?token={verificationToken}";
+
 
             await _emailService.SendEmailAsync(
                 user.Email,
-                "Verifica tu cuenta",
-                $@"
-                <h2>Verificacion de cuenta</h2>
-                <p>Solicitaste un nuevo enlace de verificacion.</p>
-                <a href='{verificationLink}'>Verificar cuenta</a>"
-                );
+                EmailSubjects.VerifyEmail,
+                EmailTemplates.ResendVerification(
+                    user.Name,
+                    verificationLink)
+            );
 
             return true;
         }
@@ -238,6 +251,8 @@ namespace Infraestructure.Service
         }
         public async Task<bool> ForgotPassword(string email)
         {
+            var baseUrl = _configuration["AppSettings:BaseUrl"];
+
             var user = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == email);
 
@@ -246,16 +261,16 @@ namespace Infraestructure.Service
 
             var token = GeneratePasswordResetToken(user);
 
-            var resetLink =
-                $"https://localhost:7001/reset-password?token={token}";
+            var resetLink = $"{baseUrl}/reset-password?token={token}";
+
 
             await _emailService.SendEmailAsync(
                 user.Email,
-                "Recuperar contraseña",
-                $@"
-                <h2>Recuperacion de contraseña</h2>
-                <p>Hace click en el siguiente enlace:</p>
-                <a href='{resetLink}'>Restablecer contraseña</a>");
+                EmailSubjects.ResetPassword,
+                EmailTemplates.ResetPassword(
+                    user.Name,
+                    resetLink)
+            );
 
             return true;
         }
@@ -322,3 +337,4 @@ namespace Infraestructure.Service
         }
     }
 }
+

@@ -1,80 +1,78 @@
 ﻿using Application.Interfaces;
-using Infrastructure;
 using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
-public class EmailService : IEmailService
-{
-    private readonly EmailSettings _settings;
-
-    public EmailService(IOptions<EmailSettings> options)
+namespace Infrastructure.Service {  
+    public class EmailService : IEmailService
     {
-        _settings = options.Value;
-    }
-    public async Task SendEmailAsync(string to, string subject, string body)
-    {
-        var email = new MimeMessage();
+        private readonly EmailSettings _settings;
 
-        email.From.Add(
-            MailboxAddress.Parse("Gymtupproject@gmail.com"));
-
-        email.To.Add(
-            MailboxAddress.Parse(to));
-
-        email.Subject = subject;
-
-        email.Body = new TextPart("html")
+        public EmailService(IOptions<EmailSettings> options)
         {
-            Text = body
-        };
-
-        // Create a protocol log to capture the SMTP session for debugging
-        var logPath = "smtp.log";
-        using var protocolLogger = new ProtocolLogger(logPath);
-        using var smtp = new SmtpClient(protocolLogger);
-
-        await smtp.ConnectAsync(
-            "smtp.gmail.com",
-            587,
-            SecureSocketOptions.StartTls);
-
-        // Record the authentication mechanisms offered by the server
-        try
-        {
-            File.AppendAllText(logPath, $"Auth mechanisms: {string.Join(", ", smtp.AuthenticationMechanisms)}{Environment.NewLine}");
+            _settings = options.Value;
         }
-        catch
+        public async Task SendEmailAsync(string to, string subject, string body)
         {
-            // ignore logging errors
-        }
+            var email = new MimeMessage();
 
-        try
-        {
-            await smtp.AuthenticateAsync(
-              _settings.Email,
-              _settings.Password);
-        }
-        catch (AuthenticationException ex)
-        {
+            email.From.Add(
+                MailboxAddress.Parse("Gymtupproject@gmail.com"));
+
+            email.To.Add(
+                MailboxAddress.Parse(to));
+
+            email.Subject = subject;
+
+            email.Body = new TextPart("html")
+            {
+                Text = body
+            };
+
+            var logPath = "smtp.log";
+            using var protocolLogger = new ProtocolLogger(logPath);
+            using var smtp = new SmtpClient(protocolLogger);
+
+            await smtp.ConnectAsync(
+                "smtp.gmail.com",
+                587,
+                SecureSocketOptions.StartTls);
+
             try
             {
-                File.AppendAllText(logPath, $"Authentication failed: {ex.Message}{Environment.NewLine}");
-                if (ex.InnerException != null)
-                    File.AppendAllText(logPath, $"Inner: {ex.InnerException.Message}{Environment.NewLine}");
+                File.AppendAllText(logPath, $"Auth mechanisms: {string.Join(", ", smtp.AuthenticationMechanisms)}{Environment.NewLine}");
             }
             catch
             {
-                // ignore logging errors
             }
 
-            throw;
+            try
+            {
+                await smtp.AuthenticateAsync(
+                  _settings.Email,
+                  _settings.Password);
+            }
+            catch (AuthenticationException ex)
+            {
+                try
+                {
+                    File.AppendAllText(logPath, $"Authentication failed: {ex.Message}{Environment.NewLine}");
+                    if (ex.InnerException != null)
+                        File.AppendAllText(logPath, $"Inner: {ex.InnerException.Message}{Environment.NewLine}");
+                }
+                catch
+                {
+                    // ignore logging errors
+                }
+
+                throw;
+            }
+
+            await smtp.SendAsync(email);
+
+            await smtp.DisconnectAsync(true);
         }
-
-        await smtp.SendAsync(email);
-
-        await smtp.DisconnectAsync(true);
     }
 }

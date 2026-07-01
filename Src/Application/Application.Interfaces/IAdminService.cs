@@ -1,5 +1,6 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Request.Admin;
+using Application.Dtos.Responses;
 using Domain.Entity;
 
 namespace Application.Interfaces
@@ -22,8 +23,11 @@ namespace Application.Interfaces
 
         Task<IEnumerable<Class?>> DeleteClass(Guid id);
 
-
         Task<IEnumerable<Class>> GetClass();
+
+        Task<ClassDetailResponse?> GetClassDetail(Guid id);
+
+        Task<ClientInscriptionsResponse?> GetClientInscriptions(Guid clientId);
 
         Task<IEnumerable<Class?>> UpdateClass(Guid id, CreateClassRequest request, List<CreteScheduleAdminRequest> scheduleRequests);
 

@@ -1,4 +1,5 @@
-﻿
+﻿exceptions maxi
+falta admin service y inscribe service y posiblemente lo que traiga de la main de nahu
 
 User
 	-crear envios de mail (Maxi) terminado
@@ -27,3 +28,5 @@ Plan
 
 	--Magi cuando hagas los planes agrega  una verificacion de que este validado el mail del usuario para que pueda comprar el plan, sino que le diga que tiene que validar el mail para comprar el plan
 
+
+TENEMOS MUCHAS COSAS DENTRO DE USER CONTROLLER QUE ALGUNAS DEBERIAN IR A ADMIN CONTROLLER Y OTRAS A CLIENT CONTROLLER PARA NO CONFUNDIR

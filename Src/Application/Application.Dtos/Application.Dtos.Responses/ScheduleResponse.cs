@@ -2,7 +2,7 @@
 {
     public class ScheduleResponse
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         public int DayOfWeek { get; set; }
 

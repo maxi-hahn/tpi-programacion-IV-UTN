@@ -49,7 +49,7 @@ namespace Infrastructure.Migrations
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserType = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
-                    Id_Plan = table.Column<int>(type: "int", nullable: true)
+                    Id_Plan = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {

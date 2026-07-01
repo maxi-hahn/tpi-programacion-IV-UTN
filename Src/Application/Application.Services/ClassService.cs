@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Exceptions;
+using Application.Interfaces;
 using Domain.Entity;
 using Domain.Interface;
 
@@ -7,10 +8,11 @@ namespace Application.Services
     public class ClassService : IClassService
     {
         private readonly IClassRepository _repo;
-
-        public ClassService(IClassRepository repo)
+        private readonly IInscriptionRepository _inscriptionRepo;
+        public ClassService(IClassRepository repo, IInscriptionRepository inscriptionRepo)
         {
             _repo = repo;
+            _inscriptionRepo = inscriptionRepo;
         }
 
         public async Task<IEnumerable<Class>> GetAll()
@@ -20,13 +22,30 @@ namespace Application.Services
 
         public async Task<Class?> GetById(Guid id)
         {
-            return await _repo.GetById(id);
+            var gymClass = await _repo.GetById(id);
+            if (gymClass == null)
+                throw new NotFoundException($"Class with ID {id} not found.");
+          
+            return gymClass;
         }
 
         public async Task<Class> Create(Class gymClass)
         {
-            gymClass.Id = Guid.NewGuid();
 
+            if (gymClass == null)
+                throw new BadRequestException("Class cannot be null.");
+            if (gymClass.Max_Users <=0 || gymClass.Max_Users >100)
+                throw new BadRequestException("Max_Users must be a positive number between 1 and 100.");
+            if (string.IsNullOrWhiteSpace(gymClass.Name))
+                throw new BadRequestException("Name cannot be empty.");
+
+            var classes = await _repo.GetAll();
+
+            if (classes.Any(c => c.Name.ToLower() == gymClass.Name.ToLower()))
+            {
+                throw new ConflictException("A class with that name already exists");
+            }
+            gymClass.Id = Guid.NewGuid();
             await _repo.Add(gymClass);
             await _repo.Save();
 
@@ -38,9 +57,20 @@ namespace Application.Services
             var gymClass = await _repo.GetById(id);
 
             if (gymClass == null)
-                return false;
+                throw new NotFoundException($"Class with ID {id} not found.");
 
-            gymClass.Name = updatedClass.Name ?? gymClass.Name;
+            if (updatedClass.Max_Users <= 0)
+                throw new BadRequestException("Max_Users must be a positive number.");
+
+            if (string.IsNullOrWhiteSpace(updatedClass.Name))
+                throw new BadRequestException("Name cannot be empty.");
+
+            var currentInscriptions = await _inscriptionRepo.CountActiveByClassId(id);
+
+            if (updatedClass.Max_Users < currentInscriptions)
+                throw new ConflictException($"There are currently {currentInscriptions} registered users. Max_Users cannot be lower.");
+
+            gymClass.Name = updatedClass.Name;
             gymClass.Max_Users = updatedClass.Max_Users;
 
             await _repo.Update(gymClass);
@@ -54,7 +84,13 @@ namespace Application.Services
             var gymClass = await _repo.GetById(id);
 
             if (gymClass == null)
-                return false;
+                throw new NotFoundException($"Class with ID {id} not found.");
+
+            var hasInscriptions =
+                await _inscriptionRepo.ExistsByClassId(id);
+
+            if (hasInscriptions)
+                throw new ConflictException("Cannot delete a class with registered users.");
 
             await _repo.Delete(gymClass);
             await _repo.Save();

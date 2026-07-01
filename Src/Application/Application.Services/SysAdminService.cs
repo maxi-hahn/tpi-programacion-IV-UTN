@@ -1,15 +1,16 @@
 ﻿using Application.Dtos.Request;
+using Application.Exceptions;
 using Application.Interfaces;
 using Domain.Entity;
 using Domain.Interface;
 using Microsoft.Extensions.Configuration;
-
 
 namespace Application.Services
 {
     public class SysAdminService : UserService, ISysAdminService
     {
         private readonly IConfiguration _configuration;
+
         public SysAdminService(
             IUserRepository repo,
             IPasswordHasherService hasher,
@@ -20,15 +21,18 @@ namespace Application.Services
             _configuration = configuration;
         }
 
-        public async Task<User?> UpgradeUsersRol(UpgradeUsersRol request)
+        public async Task<User> UpgradeUsersRol(UpgradeUsersRol request)
         {
             var user = await _repo.GetByEmail(request.Email);
 
             if (user == null)
-                return null;
-            
-            if(user.Email == _configuration["SeedAdmin:Email"]!){
-                return null;
+            {
+                throw new NotFoundException("User not found");
+            }
+
+            if (user.Email == _configuration["SeedAdmin:Email"]!)
+            {
+                throw new ConflictException("The primary user role cannot be modified");
             }
 
             User newUser;
@@ -43,9 +47,12 @@ namespace Application.Services
                     newUser = new SysAdmin();
                     break;
 
-                default:
+                case "client":
                     newUser = new Client();
                     break;
+
+                default:
+                    throw new ValidationException("Invalid role");
             }
 
             newUser.Id = user.Id;

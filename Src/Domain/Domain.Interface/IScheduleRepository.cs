@@ -1,7 +1,8 @@
 ﻿using Domain.Entity;
+using Microsoft.VisualBasic;
 namespace Domain.Interface
 {
-    public interface IScheduleRepository
+    public interface IScheduleRepository : IBaseRepository<Schedule>
     {
 
         Task<List<Schedule>> GetAll();

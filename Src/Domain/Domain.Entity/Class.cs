@@ -22,6 +22,4 @@ namespace Domain.Entity
         //public Guid adminID { get; set; }
 
     }
-
-    
 }

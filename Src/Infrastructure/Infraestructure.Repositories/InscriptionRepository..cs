@@ -1,17 +1,13 @@
 ﻿using Domain.Entity;
 using Domain.Interface;
 using Microsoft.EntityFrameworkCore;
-using Trabajop4.Infrastructure;
 
 namespace Infrastructure.Repositories
 {
-    public class InscriptionRepository : IInscriptionRepository
+    public class InscriptionRepository : BaseRepository<Inscription>, IInscriptionRepository
     {
-        private readonly ApplicationDbContext _context;
-
-        public InscriptionRepository(ApplicationDbContext context)
+        public InscriptionRepository(ApplicationDbContext context) : base(context)
         {
-            _context = context;
         }
 
         public async Task<IEnumerable<Inscription>> GetAll()
@@ -23,27 +19,34 @@ namespace Infrastructure.Repositories
             return await _context.Inscriptions
                 .FirstOrDefaultAsync(i => i.Id == id);
         }
-        public async Task<IEnumerable<Inscription>> GetByClassId(Guid classId)
+        public async Task<IEnumerable<Inscription>> GetByUserId(Guid userId)
         {
-            return await _context.Inscriptions
-                .Where(i => i.ClassId == classId)
-                .ToListAsync();
+            return await _context.Inscriptions.Where(i => i.UserId == userId).ToListAsync();
         }
-
+        public async Task<IEnumerable<Inscription>> GetByUserIdWithClass(Guid userId)
+        {
+            return await _context.Inscriptions.Include(i => i.Class)
+                .ThenInclude(c => c.Schedules).Where(i => i.UserId == userId && i.IsActive).ToListAsync();
+        }
+        public async Task<IEnumerable<Inscription>> GetByClassId(Guid classId)
+        { 
+            return await _context.Inscriptions.Where(i => i.ClassId == classId).ToListAsync(); 
+        }
         public async Task<Inscription?> GetByUserAndClass(Guid userId, Guid classId)
         {
-            return await _context.Inscriptions
-                .FirstOrDefaultAsync(i => i.UserId == userId && i.ClassId == classId);
+            return await _context.Inscriptions.FirstOrDefaultAsync(i => i.UserId == userId && i.ClassId == classId); 
         }
-
-        public async Task Add(Inscription inscription)
+        public async Task Unsubscribe(Inscription inscription)
         {
-            await _context.Inscriptions.AddAsync(inscription);
+            inscription.IsActive = false; _context.Inscriptions.Update(inscription); 
         }
-
-        public async Task Save()
+        public async Task<bool> ExistsByClassId(Guid classId)
         {
-            await _context.SaveChangesAsync();
+            return await _context.Inscriptions.AnyAsync(i => i.ClassId == classId && i.IsActive);
+        }
+        public async Task<int> CountActiveByClassId(Guid classId)
+        {
+            return await _context.Inscriptions.CountAsync(i => i.ClassId == classId && i.IsActive);
         }
     }
 }
