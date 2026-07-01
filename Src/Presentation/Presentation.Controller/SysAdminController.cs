@@ -36,12 +36,7 @@ namespace Presentation.Presentation.Controller
         [HttpDelete("deleteUser")]
         public async Task<ActionResult> DeleteUser(Guid id)
         {
-    
-
             await _service.Delete(id);
-
-
-
             return Ok(new
             {
                 Message = "User deleted successfully",

@@ -13,7 +13,6 @@ namespace Presentation.Presentation.Controller
     {
         private readonly IScheduleService _service;
         private readonly IClassService _classService;
-
         public ScheduleController(IScheduleService service, IClassService classService)
         {
             _service = service;
@@ -41,7 +40,6 @@ namespace Presentation.Presentation.Controller
         [HttpPost]
         public async Task<ActionResult> Post(Guid idClass,[FromBody] CreateScheduleRequest dto)
         {
-
             var schedule = dto.ToSchedule();
             var existingClass = await _classService.GetById(idClass);
             if (existingClass == null)
@@ -49,7 +47,6 @@ namespace Presentation.Presentation.Controller
                 return NotFound("Class not found");
             }
             schedule.Id_Class = idClass;
-
             var created = await _service.Create(schedule);
             return Ok(created.ToScheduleResponse());
         }
@@ -59,8 +56,6 @@ namespace Presentation.Presentation.Controller
         public async Task<IActionResult> Patch(Guid id, [FromBody] UpdateScheduleRequest dto)
         {
             var schedule = dto.ToSchedule();
-
-
             await _service.Update(id, schedule);
 
             return NoContent();
@@ -71,7 +66,6 @@ namespace Presentation.Presentation.Controller
         public async Task<IActionResult> Delete(Guid id)
         {
             await _service.Delete(id);
-
             return NoContent();
         }
     }

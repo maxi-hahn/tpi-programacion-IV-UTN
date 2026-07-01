@@ -28,7 +28,6 @@ namespace Presentation.Presentation.Controller
             return Ok(result);
         }
 
-
         [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPatch("UpdateUser/{id}")]
         public virtual async Task<IActionResult> Patch(Guid id, User user)

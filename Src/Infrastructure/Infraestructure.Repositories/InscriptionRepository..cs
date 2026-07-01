@@ -28,7 +28,9 @@ namespace Infrastructure.Repositories
         }
         public async Task Unsubscribe(Inscription inscription)
         {
-            inscription.IsActive = false; _context.Inscriptions.Update(inscription); 
+            inscription.IsActive = false; _context.Inscriptions.Remove(inscription);
+
+
         }
         public async Task<bool> ExistsByClassId(Guid classId)
         {

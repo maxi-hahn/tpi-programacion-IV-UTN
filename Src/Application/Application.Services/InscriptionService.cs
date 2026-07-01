@@ -88,7 +88,11 @@ namespace Application.Services
                 if (clientActiveCount >= plan.Max_Class)
                     return new InscriptionResult { Success = false, ErrorMessage = $"El cliente alcanzó el límite de clases de su plan ({plan.Max_Class})." };
             }
-
+            //el cliente debe tener el email verificado para poder inscribirse a una clase
+            if (!client.EmailVerified)
+            {
+                return new InscriptionResult { Success = false, ErrorMessage = "El cliente debe tener el email verificado para poder inscribirse a una clase." };
+            }
             // 8. Crear la inscripción
             var inscription = new Inscription
             {
