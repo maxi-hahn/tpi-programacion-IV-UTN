@@ -26,6 +26,15 @@ namespace Infrastructure
                 .HasValue<Admin>("Admin")
                 .HasValue<SysAdmin>("SysAdmin");
 
+            modelBuilder.Entity<Inscription>()
+                .HasOne(i => i.Class)
+                .WithMany(c => c.Inscriptions)
+                .HasForeignKey(i => i.ClassId);
+
+            modelBuilder.Entity<Inscription>()
+                .HasOne(i => i.User)
+                .WithMany()
+                .HasForeignKey(i => i.UserId);
             base.OnModelCreating(modelBuilder);
         }
     }

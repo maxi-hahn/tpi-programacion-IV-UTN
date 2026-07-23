@@ -82,6 +82,16 @@ builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
 builder.Services.AddHostedService<SubscriptionBackgroundService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactPolicy", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -161,6 +171,7 @@ using (var scope = app.Services.CreateScope())
 
 
 //app.UseHttpsRedirection();
+app.UseCors("ReactPolicy");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();

@@ -8,15 +8,21 @@ namespace Application.Mapper
     {
         public static ClassResponse ToClassResponse(this Class gymClass)
         {
+            var enrolledUsers = gymClass.Inscriptions.Count(i => i.IsActive);
+
             return new ClassResponse
             {
                 Id = gymClass.Id,
                 Name = gymClass.Name,
                 Max_Users = gymClass.Max_Users,
-                Schedules = gymClass.Schedules?.Select(s => s.ToScheduleResponse()).ToList() ?? new()
+                EnrolledUsers = enrolledUsers,
+                AvailableSpots = gymClass.Max_Users - enrolledUsers,
+                IsFull = enrolledUsers >= gymClass.Max_Users,
+                Schedules = gymClass.Schedules?
+                    .Select(s => s.ToScheduleResponse())
+                    .ToList() ?? new()
             };
         }
-
         public static ClassDetailResponse ToClassDetailResponse(this Class gymClass, int currentInscriptions, List<ClientInfoResponse> clients)
         {
             return new ClassDetailResponse
