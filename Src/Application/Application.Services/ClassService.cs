@@ -65,7 +65,7 @@ namespace Application.Services
             if (string.IsNullOrWhiteSpace(updatedClass.Name))
                 throw new BadRequestException("Name cannot be empty.");
 
-            var currentInscriptions = await _inscriptionRepo.CountActiveByClassId(id);
+            var currentInscriptions = await _inscriptionRepo.CountActiveByScheduleId(id);
 
             if (updatedClass.Max_Users < currentInscriptions)
                 throw new ConflictException($"There are currently {currentInscriptions} registered users. Max_Users cannot be lower.");
@@ -87,7 +87,7 @@ namespace Application.Services
                 throw new NotFoundException($"Class with ID {id} not found.");
 
             var hasInscriptions =
-                await _inscriptionRepo.ExistsByClassId(id);
+                await _inscriptionRepo.ExistsByScheduleId(id);
 
             if (hasInscriptions)
                 throw new ConflictException("Cannot delete a class with registered users.");

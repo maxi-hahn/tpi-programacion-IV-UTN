@@ -140,7 +140,7 @@ namespace Application.Services
             var gymClass = await _repo.GetById(id);
             if (gymClass == null)
                 throw new NotFoundException("Class not found");
-            var classHasInscriptions = await _inscriptionRepo.ExistsByClassId(id);
+            var classHasInscriptions = await _inscriptionRepo.ExistsByScheduleId(id);
 
             if (classHasInscriptions)
             {
@@ -196,7 +196,7 @@ namespace Application.Services
             if (gymClass == null)
                 throw new NotFoundException("Class not found");
 
-            var inscriptions = await _inscriptionRepo.GetByClassId(id);
+            var inscriptions = await _inscriptionRepo.GetByScheduleId(id);
             var activeInscriptions = inscriptions.Where(i => i.IsActive).ToList();
 
             var clients = new List<ClientInfoResponse>();

@@ -39,32 +39,48 @@ namespace Application.Services
 
             // 3. Validar que no haya superposición de horarios con otras clases del cliente
             var clientActiveInscriptions = await _inscriptionRepo.GetByUserId(request.UserId);
+
+            var selectedSchedule = gymClass.Schedules
+                .FirstOrDefault(s => s.Id == request.ScheduleId);
+
+            if (selectedSchedule == null)
+            {
+                return new InscriptionResult
+                {
+                    Success = false,
+                    ErrorMessage = "El horario no existe."
+                };
+            }
+
             foreach (var activeInscription in clientActiveInscriptions.Where(i => i.IsActive))
             {
                 var otherClass = await _classRepo.GetById(activeInscription.ClassId);
-                if (otherClass == null) continue;
 
-                foreach (var newSchedule in gymClass.Schedules)
+                if (otherClass == null)
+                    continue;
+
+                foreach (var existingSchedule in otherClass.Schedules)
                 {
-                    foreach (var existingSchedule in otherClass.Schedules)
+                    if (selectedSchedule.DayOfWeek == existingSchedule.DayOfWeek &&
+                        selectedSchedule.StartTime < existingSchedule.EndTime &&
+                        existingSchedule.StartTime < selectedSchedule.EndTime)
                     {
-                        if (newSchedule.DayOfWeek == existingSchedule.DayOfWeek &&
-                            newSchedule.StartTime < existingSchedule.EndTime &&
-                            existingSchedule.StartTime < newSchedule.EndTime)
+                        return new InscriptionResult
                         {
-                            return new InscriptionResult { Success = false, ErrorMessage = $"El horario se superpone con la clase '{otherClass.Name}' a la que ya estás inscripto." };
-                        }
+                            Success = false,
+                            ErrorMessage = $"El horario se superpone con la clase '{otherClass.Name}' a la que ya estás inscripto."
+                        };
                     }
                 }
             }
 
             // 4. Validar que el usuario no esté ya inscripto
-            var existing = await _inscriptionRepo.GetByUserAndClass(request.UserId, request.ClassId);
+            var existing = await _inscriptionRepo.GetByUserAndSchedule(request.UserId, request.ScheduleId);
             if (existing != null && existing.IsActive)
                 return new InscriptionResult { Success = false, ErrorMessage = "El cliente ya está inscripto en esta clase." };
 
             // 5. Validar cupos disponibles en la clase
-            var inscriptions = await _inscriptionRepo.GetByClassId(request.ClassId);
+            var inscriptions = await _inscriptionRepo.GetByScheduleId(request.ScheduleId);
             var activeCount = inscriptions.Count(i => i.IsActive);
             if (activeCount >= gymClass.Max_Users)
                 return new InscriptionResult { Success = false, ErrorMessage = "La clase no tiene cupos disponibles." };
@@ -99,6 +115,7 @@ namespace Application.Services
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
                 ClassId = request.ClassId,
+                ScheduleId = request.ScheduleId,
                 InscriptionDate = DateTime.UtcNow,
                 IsActive = true
             };
@@ -112,15 +129,17 @@ namespace Application.Services
                 Data = inscription.ToInscriptionResponse()
             };
         }
-        public async Task<InscriptionResult> Unsubscribe(Guid userId, Guid classId)
+        public async Task<InscriptionResult> Unsubscribe(Guid userId, Guid scheduleId)
         {
-            // 1. Buscar la inscripción
-            var inscription = await _inscriptionRepo.GetByUserAndClass(userId, classId);
+            var inscription = await _inscriptionRepo.GetByUserAndSchedule(userId, scheduleId);
 
             if (inscription == null || !inscription.IsActive)
-                return new InscriptionResult { Success = false, ErrorMessage = "El cliente no está inscripto en esta clase." };
+                return new InscriptionResult
+                {
+                    Success = false,
+                    ErrorMessage = "El cliente no está inscripto en este horario."
+                };
 
-            // 2. Desactivar la inscripción
             await _inscriptionRepo.Unsubscribe(inscription);
             await _inscriptionRepo.Save();
 

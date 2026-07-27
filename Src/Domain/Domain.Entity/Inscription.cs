@@ -11,7 +11,9 @@
         public Class? Class { get; set; }
 
         public DateTime InscriptionDate { get; set; }
+        public Guid ScheduleId { get; set; }
 
+        public Schedule? Schedule { get; set; }
         public bool IsActive { get; set; }
     }
 }
