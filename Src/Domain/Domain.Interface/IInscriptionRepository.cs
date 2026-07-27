@@ -1,4 +1,4 @@
-﻿using Domain.Entity;
+using Domain.Entity;
 namespace Domain.Interface
 {
     public interface IInscriptionRepository : IBaseRepository<Inscription>
@@ -14,6 +14,12 @@ namespace Domain.Interface
         Task<bool> ExistsByScheduleId(Guid scheduleId);
 
         Task<int> CountActiveByScheduleId(Guid scheduleId);
+
+        Task<IEnumerable<Inscription>> GetByClassId(Guid classId);
+
+        Task<bool> ExistsByClassId(Guid classId);
+
+        Task<int> CountActiveByClassId(Guid classId);
 
         Task Unsubscribe(Inscription inscription);
     }
