@@ -25,6 +25,7 @@ namespace Domain.Entity
 
         public Schedule() { }
 
+        public List<Inscription> Inscriptions { get; set; } = new();
     }
 
 

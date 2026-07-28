@@ -27,14 +27,14 @@ namespace Presentation.Presentation.Controller
             return Ok(schedules.Select(s => s.ToScheduleResponse()));
         }
 
-        [AllowAnonymous]
-        [HttpGet("{id}")]
-        public async Task<ActionResult> GetById(Guid id)
-        {
-            var schedule = await _service.GetById(id);
-
-            return Ok(schedule);
-        }
+//        [AllowAnonymous]
+//        [HttpGet("{id}")]
+//        public async Task<ActionResult> GetById(Guid id)
+ //       {
+  //          var schedule = await _service.GetById(id);
+//
+   //         return Ok(schedule);
+   //     }
 
         [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPost]

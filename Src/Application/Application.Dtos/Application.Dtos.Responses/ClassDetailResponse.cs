@@ -13,6 +13,11 @@
     public class ClientInfoResponse
     {
         public string Name { get; set; } = string.Empty;
+
         public string Email { get; set; } = string.Empty;
+
+        public Guid ScheduleId { get; set; }
+
+        public ScheduleResponse Schedule { get; set; } = null!;
     }
 }

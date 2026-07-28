@@ -3,9 +3,15 @@
     public class MyInscriptionResponse
     {
         public Guid InscriptionId { get; set; }
+
         public Guid ClassId { get; set; }
+
         public string ClassName { get; set; } = string.Empty;
-        public List<ScheduleResponse> Schedules { get; set; } = new();
+
+        public Guid ScheduleId { get; set; }
+
+        public ScheduleResponse Schedule { get; set; } = null!;
+
         public DateTime InscriptionDate { get; set; }
     }
 }

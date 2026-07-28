@@ -74,15 +74,15 @@ namespace Presentation.Presentation.Controller
             return Ok(result);
         }
 
-        [Authorize(Policy = Policies.AdminOSysAdmin)]
-        [HttpPut("updateClass/{id}")]
-        public async Task<ActionResult> UpdateClass(Guid id, [FromBody] CreateClassWithSchedulesRequest request)
-        {
+ //       [Authorize(Policy = Policies.AdminOSysAdmin)]
+  //      [HttpPut("updateClass/{id}")]
+    //    public async Task<ActionResult> UpdateClass(Guid id, [FromBody] CreateClassWithSchedulesRequest request)
+      //  {
 
-            var result = await _AdminService.UpdateClass(id, request.ClassRequest, request.ScheduleRequests);
+        //    var result = await _AdminService.UpdateClass(id, request.ClassRequest, request.ScheduleRequests);
 
-            return Ok(result.Select(c => c.ToClassResponse()));
-        }
+          //  return Ok(result.Select(c => c.ToClassResponse()));
+        //}
 
     }
 }

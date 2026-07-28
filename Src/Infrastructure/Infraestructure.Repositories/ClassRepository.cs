@@ -15,6 +15,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.Classes
                 .Include(c => c.Schedules)
+                .Include(c => c.Inscriptions)
                 .ToListAsync();
         }
 

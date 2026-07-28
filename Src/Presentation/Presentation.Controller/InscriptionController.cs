@@ -30,11 +30,10 @@ namespace Presentation.Presentation.Controller
 
             return Ok(new { message = "Inscripción exitosa.", data = result.Data });
         }
-
-        [HttpDelete("{classId}")]
-        public async Task<IActionResult> Unsubscribe(Guid classId)
+        [HttpDelete("{scheduleId}")]
+        public async Task<IActionResult> Unsubscribe(Guid scheduleId)
         {
-            var result = await _service.Unsubscribe(_userContext.UserId, classId);
+            var result = await _service.Unsubscribe(_userContext.UserId, scheduleId);
 
             if (!result.Success)
                 return BadRequest(result.ErrorMessage);

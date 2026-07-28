@@ -13,6 +13,7 @@ namespace Application.Mapper
                 Id = inscription.Id,
                 UserId = inscription.UserId,
                 ClassId = inscription.ClassId,
+                ScheduleId = inscription.ScheduleId,
                 InscriptionDate = inscription.InscriptionDate,
                 IsActive = inscription.IsActive
             };
@@ -25,7 +26,8 @@ namespace Application.Mapper
                 InscriptionId = inscription.Id,
                 ClassId = inscription.ClassId,
                 ClassName = inscription.Class?.Name ?? string.Empty,
-                Schedules = inscription.Class?.Schedules?.Select(s => s.ToScheduleResponse()).ToList() ?? new(),
+                ScheduleId = inscription.ScheduleId,
+                Schedule = inscription.Schedule?.ToScheduleResponse(),
                 InscriptionDate = inscription.InscriptionDate
             };
         }
@@ -37,6 +39,7 @@ namespace Application.Mapper
                 Id = Guid.NewGuid(),
                 UserId = request.UserId,
                 ClassId = request.ClassId,
+                ScheduleId = request.ScheduleId,
                 InscriptionDate = DateTime.UtcNow,
                 IsActive = true
             };
