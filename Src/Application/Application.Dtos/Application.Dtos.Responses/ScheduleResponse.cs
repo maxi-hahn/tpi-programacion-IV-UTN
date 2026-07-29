@@ -11,5 +11,11 @@
         public TimeOnly EndTime { get; set; }
 
         public bool IsActive { get; set; }
+        
+        public int EnrolledUsers { get; set; }
+
+        public int AvailableSpots { get; set; }
+
+        public bool IsFull { get; set; }
     }
 }

@@ -6,15 +6,23 @@ namespace Application.Mapper
 {
     public static class ScheduleMapper
     {
-        public static ScheduleResponse ToScheduleResponse(this Schedule schedule)
+        public static ScheduleResponse ToScheduleResponse(this Schedule schedule, int maxUsers)
         {
+            var enrolledUsers = schedule.Inscriptions?
+                .Count(i => i.IsActive) ?? 0;
+
             return new ScheduleResponse
             {
                 Id = schedule.Id,
                 DayOfWeek = (int)schedule.DayOfWeek,
                 StartTime = schedule.StartTime,
                 EndTime = schedule.EndTime,
-                IsActive = schedule.IsActive
+
+                EnrolledUsers = enrolledUsers,
+
+                AvailableSpots = Math.Max(0, maxUsers - enrolledUsers),
+
+                IsFull = enrolledUsers >= maxUsers
             };
         }
 

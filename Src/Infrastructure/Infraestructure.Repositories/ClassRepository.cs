@@ -15,7 +15,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.Classes
                 .Include(c => c.Schedules)
-                .Include(c => c.Inscriptions)
+                    .ThenInclude(s => s.Inscriptions)
                 .ToListAsync();
         }
 
@@ -23,6 +23,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.Classes
                 .Include(c => c.Schedules)
+                    .ThenInclude(s => s.Inscriptions)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
     }
