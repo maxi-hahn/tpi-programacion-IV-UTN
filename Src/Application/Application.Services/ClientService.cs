@@ -1,3 +1,4 @@
+using Application.Dtos.Responses;
 using Application.Exceptions;
 using Application.Interfaces;
 using Domain.Entity;
@@ -68,6 +69,28 @@ namespace Application.Services
             await _userRepo.Save();
 
             return client;
+        }
+
+        public async Task<ClientPlanResponse> GetMyPlanStatus()
+        {
+            var client = await _userRepo.GetById(_userContext.UserId) as Client
+                ?? throw new NotFoundException("Client not found");
+
+            string? planName = null;
+            if (client.Id_Plan.HasValue)
+            {
+                var plan = await _planRepo.GetById(client.Id_Plan.Value);
+                planName = plan?.Name;
+            }
+
+            return new ClientPlanResponse
+            {
+                PlanId = client.Id_Plan,
+                PlanName = planName,
+                IsActive = client.IsActive,
+                SubscriptionStartDate = client.SubscriptionStartDate,
+                SubscriptionEndDate = client.SubscriptionEndDate,
+            };
         }
     }
     }

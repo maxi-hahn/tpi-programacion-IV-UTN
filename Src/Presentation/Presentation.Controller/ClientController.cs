@@ -1,5 +1,7 @@
 ﻿using Application.Dtos.Request;
+using Application.Dtos.Responses;
 using Application.Interfaces;
+using Application.Services;
 using Domain.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +17,13 @@ namespace Presentation.Presentation.Controller
         private readonly IPlanRepository _planRepo;
         private readonly IMercadoPagoService _mercadoPagoService;
         private readonly IUserService _service;
-        public ClientController(IUserService service, IMercadoPagoService mercadoPagoService, IPlanRepository planRepo)
+        private readonly IClientService _clientService;
+        public ClientController(IUserService service, IMercadoPagoService mercadoPagoService, IPlanRepository planRepo, IClientService clientService)
         {
             _service = service;
             _planRepo = planRepo;
             _mercadoPagoService = mercadoPagoService;
+            _clientService = clientService;
         }
 
         [HttpPost("webhook/mercadopago")]
@@ -52,6 +56,14 @@ namespace Presentation.Presentation.Controller
             return Ok(new { PaymentUrl = initPoint });
         }
 
+        [Authorize(Policy = Policies.SoloClient)]
+        [HttpGet("me")]
+        public async Task<ActionResult<ClientPlanResponse>> GetMe()
+        {
+            var result = await _clientService.GetMyPlanStatus();
+            return Ok(result);
+        }
+
         [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpGet]
         public virtual async Task<ActionResult> Get()
@@ -79,6 +91,15 @@ namespace Presentation.Presentation.Controller
         {
             var user = await _service.GetById(id);
             return Ok(user);
+        }
+
+        // TODO: temporal para testing, sacar cuando el webhook de MercadoPago funcione en un entorno accesible
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
+        [HttpPost("test-subscribe")]
+        public async Task<ActionResult> TestSubscribe([FromBody] SubscribePlanRequest request)
+        {
+            var result = await _clientService.SubscribeToPlan(request);
+            return Ok(result);
         }
     }
 }
