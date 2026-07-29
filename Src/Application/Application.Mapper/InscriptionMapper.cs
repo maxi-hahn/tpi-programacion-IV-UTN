@@ -27,7 +27,7 @@ namespace Application.Mapper
                 ClassId = inscription.ClassId,
                 ClassName = inscription.Class?.Name ?? string.Empty,
                 ScheduleId = inscription.ScheduleId,
-                Schedule = inscription.Schedule?.ToScheduleResponse(),
+                Schedule = inscription.Schedule?.ToScheduleResponse (inscription.Class?.Max_Users ?? 0),
                 InscriptionDate = inscription.InscriptionDate
             };
         }

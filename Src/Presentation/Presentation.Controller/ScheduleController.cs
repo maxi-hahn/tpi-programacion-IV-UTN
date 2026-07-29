@@ -24,7 +24,7 @@ namespace Presentation.Presentation.Controller
         public async Task<ActionResult> Get()
         {
             var schedules = await _service.GetAll();
-            return Ok(schedules.Select(s => s.ToScheduleResponse()));
+            return Ok(schedules.Select(s => s.ToScheduleResponse (0)));
         }
 
 //        [AllowAnonymous]
@@ -48,7 +48,7 @@ namespace Presentation.Presentation.Controller
             }
             schedule.Id_Class = idClass;
             var created = await _service.Create(schedule);
-            return Ok(created.ToScheduleResponse());
+            return Ok(created.ToScheduleResponse (existingClass.Max_Users));
         }
 
         [Authorize(Policy = Policies.AdminOSysAdmin)]

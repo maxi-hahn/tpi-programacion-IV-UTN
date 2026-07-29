@@ -8,7 +8,9 @@ namespace Application.Mapper
     {
         public static ClassResponse ToClassResponse(this Class gymClass)
         {
-            var enrolledUsers = gymClass.Inscriptions.Count(i => i.IsActive);
+            var enrolledUsers = gymClass.Schedules
+          .SelectMany(s => s.Inscriptions)
+          .Count(i => i.IsActive);
 
             return new ClassResponse
             {
@@ -19,8 +21,8 @@ namespace Application.Mapper
                 AvailableSpots = gymClass.Max_Users - enrolledUsers,
                 IsFull = enrolledUsers >= gymClass.Max_Users,
                 Schedules = gymClass.Schedules?
-                    .Select(s => s.ToScheduleResponse())
-                    .ToList() ?? new()
+                .Select(s => s.ToScheduleResponse(gymClass.Max_Users))
+                .ToList() ?? new()
             };
         }
         public static ClassDetailResponse ToClassDetailResponse(this Class gymClass, int currentInscriptions, List<ClientInfoResponse> clients)
@@ -31,7 +33,9 @@ namespace Application.Mapper
                 Name = gymClass.Name,
                 Max_Users = gymClass.Max_Users,
                 CurrentInscriptions = currentInscriptions,
-                Schedules = gymClass.Schedules.Select(s => s.ToScheduleResponse()).ToList(),
+                Schedules = gymClass.Schedules
+                .Select(s => s.ToScheduleResponse(gymClass.Max_Users))
+                .ToList(),
                 Clients = clients
             };
         }
