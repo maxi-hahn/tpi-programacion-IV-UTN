@@ -116,6 +116,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(Policies.AdminOSysAdmin, policy => policy.RequireRole("Admin", "SysAdmin"));
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendDev", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 
@@ -173,6 +182,8 @@ using (var scope = app.Services.CreateScope())
 //app.UseHttpsRedirection();
 app.UseCors("ReactPolicy");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.UseCors("FrontendDev");
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -19,7 +19,7 @@ namespace Presentation.Presentation.Controller
 
         [AllowAnonymous]
         [HttpPost("singin")]
-        public async Task<ActionResult<SingInResponse>> SingIn([FromBody] SingInRequest request)
+        public async Task<ActionResult<AuthResponse>> SingIn([FromBody] SingInRequest request)
         {
             var response = await _authService.SingIn(request);
             return Ok(response);
