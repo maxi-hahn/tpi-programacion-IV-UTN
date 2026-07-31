@@ -493,7 +493,8 @@ $RECYCLE.BIN/
 
 .vs/
 **/.vs/
-
+appsettings.json
+appsettings.Development.json
 appsettings.Development.json
 /.vs/TrabajoP4.slnx/v18/.suo
 appsettings.json
