@@ -23,12 +23,22 @@ namespace Presentation.Presentation.Controller
         [HttpPost]
         public async Task<IActionResult> Inscribe([FromBody] InscriptionRequest request)
         {
-            var result = await _service.Inscribe(request);
-
+            var result = await _service.Inscribe(_userContext.UserId, request);
             if (!result.Success)
-                return BadRequest(result.ErrorMessage);
+            {
+                return BadRequest(new
+                {
+                    code = result.code,
+                    message = result.ErrorMessage
+                });
+            }
 
-            return Ok(new { message = "Inscripción exitosa.", data = result.Data });
+            return Ok(new
+            {
+                code = result.code,
+                message = "Inscripción exitosa.",
+                data = result.Data
+            });
         }
         [HttpDelete("{scheduleId}")]
         public async Task<IActionResult> Unsubscribe(Guid scheduleId)
@@ -36,9 +46,9 @@ namespace Presentation.Presentation.Controller
             var result = await _service.Unsubscribe(_userContext.UserId, scheduleId);
 
             if (!result.Success)
-                return BadRequest(result.ErrorMessage);
+                return BadRequest(result);
 
-            return Ok(new { message = "Desinscripción exitosa.", data = result.Data });
+            return Ok(result);
         }
 
         [HttpGet("me")]

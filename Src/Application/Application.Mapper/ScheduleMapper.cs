@@ -6,7 +6,7 @@ namespace Application.Mapper
 {
     public static class ScheduleMapper
     {
-        public static ScheduleResponse ToScheduleResponse(this Schedule schedule, int maxUsers)
+        public static ScheduleResponse ToScheduleResponse(this Schedule schedule, int maxUsers, Guid? userId = null)
         {
             var enrolledUsers = schedule.Inscriptions?
                 .Count(i => i.IsActive) ?? 0;
@@ -22,7 +22,12 @@ namespace Application.Mapper
 
                 AvailableSpots = Math.Max(0, maxUsers - enrolledUsers),
 
-                IsFull = enrolledUsers >= maxUsers
+                IsFull = enrolledUsers >= maxUsers,
+
+                IsEnrolled = userId != null &&
+                             schedule.Inscriptions.Any(i =>
+                                 i.UserId == userId &&
+                                 i.IsActive)
             };
         }
 

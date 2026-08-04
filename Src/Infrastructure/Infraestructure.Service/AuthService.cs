@@ -94,35 +94,66 @@ namespace Infrastructure.Service
             return new AuthResponse
             {
                 Token = GenerarToken(
-                    newUser.Id,
-                    newUser.Email,
-                    newUser.GetType().Name),
+                 newUser.Id,
+                 newUser.Email,
+                 newUser.GetType().Name),
+
                 Rol = newUser.GetType().Name,
+
                 Id = newUser.Id,
-                Email = newUser.Email
+
+                Name = newUser.Name,
+
+                Email = newUser.Email,
+
+                EmailVerified = newUser.EmailVerified,
+
+                PlanName = null,
+                HasPlan = false
             };
         }
         public async Task<AuthResponse?> SingIn(SingInRequest request)
         {
-            var cliente = await _context.Users
-                .FirstOrDefaultAsync(c => c.Email == request.Email);
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            if (cliente == null)
+            if (user == null)
                 throw new UnauthorizedException("Invalid email or password");
 
-            if (!_hasher.Verify(request.Password, cliente.Password))
+            if (!_hasher.Verify(request.Password, user.Password))
                 throw new UnauthorizedException("Invalid email or password");
+
+            string? planName = null;
+
+            if (user is Client client)
+            {
+                await _context.Entry(client)
+                    .Reference(c => c.Plan)
+                    .LoadAsync();
+
+                planName = client.Plan?.Name;
+            }
 
             return new AuthResponse
             {
                 Token = GenerarToken(
-                    cliente.Id,
-                    cliente.Email,
-                    cliente.GetType().Name),
+                    user.Id,
+                    user.Email,
+                    user.GetType().Name),
 
-                Rol = cliente.GetType().Name,
-                Id = cliente.Id,
-                Email = cliente.Email
+                Rol = user.GetType().Name,
+
+                Id = user.Id,
+
+                Name = user.Name,
+
+                Email = user.Email,
+
+                EmailVerified = user.EmailVerified,
+
+                PlanName = planName,
+
+                HasPlan = planName != null
             };
         }
 

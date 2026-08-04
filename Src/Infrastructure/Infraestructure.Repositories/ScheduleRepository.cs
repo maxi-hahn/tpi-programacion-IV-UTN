@@ -1,5 +1,6 @@
-﻿using Domain.Entity;
+using Domain.Entity;
 using Domain.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories
 {
@@ -8,6 +9,14 @@ namespace Infrastructure.Repositories
 
         public ScheduleRepository(ApplicationDbContext context):base(context)
         {
+        }
+
+        public override async Task<IEnumerable<Schedule>> GetAll()
+        {
+            return await _context.Schedules
+                .Include(s => s.Class)
+                .Include(s => s.Inscriptions)
+                .ToListAsync();
         }
         public async Task<Schedule> Create(Schedule schedule)
         {

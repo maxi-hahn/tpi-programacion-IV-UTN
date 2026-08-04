@@ -27,12 +27,16 @@ namespace Infrastructure.Repositories
                 .Where(i => i.ScheduleId == scheduleId)
                 .ToListAsync();
         }
-        public async Task<Inscription?> GetByUserAndSchedule(Guid userId, Guid scheduleId)
-        {
-            return await _context.Inscriptions.FirstOrDefaultAsync(i =>
+      public async Task<Inscription?> GetByUserAndSchedule(Guid userId, Guid scheduleId)
+    {
+        return await _context.Inscriptions
+            .Where(i =>
                 i.UserId == userId &&
-                i.ScheduleId == scheduleId);
-        }
+                i.ScheduleId == scheduleId &&
+                i.IsActive)
+            .OrderByDescending(i => i.InscriptionDate)
+            .FirstOrDefaultAsync();
+    }
         public async Task Unsubscribe(Inscription inscription)
         {
             inscription.IsActive = false;
