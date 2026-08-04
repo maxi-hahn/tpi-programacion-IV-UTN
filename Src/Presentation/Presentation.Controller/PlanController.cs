@@ -30,7 +30,7 @@ namespace Presentation.Presentation.Controller
 
         [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPut("UpdatePlan")]
-        public async Task<ActionResult> UpdatePlan(Guid id, CreatePlanAdminRequest request)
+        public async Task<ActionResult> UpdatePlan(Guid id, [FromBody] CreatePlanAdminRequest request)
         {
             var result = await _AdminService.UpdatePlan(id, request);
             return Ok(new
@@ -42,7 +42,7 @@ namespace Presentation.Presentation.Controller
 
         [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPost("CreatePlan")]
-        public async Task<ActionResult> CreatePlan(CreatePlanAdminRequest request)
+        public async Task<ActionResult> CreatePlan([FromBody] CreatePlanAdminRequest request)
         {
             var result = await _AdminService.CreatePlan(request);
             return Ok(new
