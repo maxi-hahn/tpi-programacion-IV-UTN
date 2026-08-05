@@ -1,4 +1,4 @@
-﻿using Application.Dtos.Request;
+using Application.Dtos.Request;
 using Application.Interfaces;
 using Application.Mapper;
 using Domain.Entity;
@@ -19,22 +19,28 @@ namespace Presentation.Presentation.Controller
             _service = service;
         }
 
-        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult> Get()
         {
+            Guid? userId = null;
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            }
+
             var classes = await _service.GetAll();
 
-            return Ok(classes.Select(c => c.ToClassResponse()));
+            return Ok(classes.Select(c => c.ToClassResponse(userId)));
         }
 
         [AllowAnonymous]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Class>> GetById(Guid id)
+        public async Task<ActionResult> GetById(Guid id)
         {
             var gymClass = await _service.GetById(id);
 
-            return Ok(gymClass);
+            return Ok(gymClass?.ToClassResponse());
         }
 
         [Authorize(Policy = Policies.AdminOSysAdmin)]

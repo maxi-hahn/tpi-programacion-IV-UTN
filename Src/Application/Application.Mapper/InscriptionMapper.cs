@@ -37,8 +37,6 @@ namespace Application.Mapper
             return new Inscription
             {
                 Id = Guid.NewGuid(),
-                UserId = request.UserId,
-                ClassId = request.ClassId,
                 ScheduleId = request.ScheduleId,
                 InscriptionDate = DateTime.UtcNow,
                 IsActive = true

@@ -99,14 +99,5 @@ namespace Presentation.Presentation.Controller
             var user = await _service.GetById(id);
             return Ok(user);
         }
-
-        // TODO: temporal para testing, sacar cuando el webhook de MercadoPago funcione en un entorno accesible
-        [Authorize(Policy = Policies.AdminOSysAdmin)]
-        [HttpPost("test-subscribe")]
-        public async Task<ActionResult> TestSubscribe([FromBody] SubscribePlanRequest request)
-        {
-            var result = await _clientService.SubscribeToPlan(request);
-            return Ok(result);
-        }
     }
 }

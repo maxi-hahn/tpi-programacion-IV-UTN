@@ -17,5 +17,6 @@
         public int AvailableSpots { get; set; }
 
         public bool IsFull { get; set; }
+        public bool IsEnrolled { get; set; }
     }
 }

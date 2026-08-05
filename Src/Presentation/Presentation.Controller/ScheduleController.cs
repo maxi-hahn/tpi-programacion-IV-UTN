@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Application.Dtos.Request;
 using Application.Interfaces;
@@ -24,7 +24,7 @@ namespace Presentation.Presentation.Controller
         public async Task<ActionResult> Get()
         {
             var schedules = await _service.GetAll();
-            return Ok(schedules.Select(s => s.ToScheduleResponse (0)));
+            return Ok(schedules.Select(s => s.ToScheduleResponse(s.Class?.Max_Users ?? 0)));
         }
 
 //        [AllowAnonymous]
