@@ -20,7 +20,23 @@ namespace Application.Services
         {
             _configuration = configuration;
         }
+        public async Task<User> ToggleUserStatus(Guid userId)
+        {
+            var user = await _repo.GetById(userId);
 
+            if (user == null)
+                throw new NotFoundException("User not found");
+
+            if (user.Email == _configuration["SeedAdmin:Email"]!)
+                throw new ConflictException("The primary user status cannot be modified");
+
+            user.IsActive = !user.IsActive;
+
+            await _repo.Update(user);
+            await _repo.Save();
+
+            return user;
+        }
         public async Task<User> UpgradeUsersRol(UpgradeUsersRol request)
         {
             var user = await _repo.GetByEmail(request.Email);

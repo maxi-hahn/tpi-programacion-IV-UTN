@@ -33,6 +33,20 @@ namespace Presentation.Presentation.Controller
         }
 
         [Authorize]
+        [HttpPatch("ToggleUserStatus")]
+        public async Task<ActionResult> ToggleUserStatus(Guid userId)
+        {
+            var result = await _sysAdminService.ToggleUserStatus(userId);
+
+            return Ok(new
+            {
+                Message = "User status updated successfully",
+                Email = result.Email,
+                IsActive = result.IsActive,
+            });
+        }
+
+        [Authorize]
         [HttpDelete("deleteUser")]
         public async Task<ActionResult> DeleteUser(Guid id)
         {

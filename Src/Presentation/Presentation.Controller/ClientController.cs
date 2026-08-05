@@ -69,8 +69,15 @@ namespace Presentation.Presentation.Controller
         public virtual async Task<ActionResult> Get()
         {
             var users = await _service.GetAll();
-            // devolver solo el tipo específico (Client, Admin, etc.)
-            return Ok(users);
+            var result = users.Select(u => new UserListResponse
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                Rol = u.GetType().Name,
+                IsActive = u.IsActive,
+            });
+            return Ok(result);
         }
 
         ////para que el usuario pueda actualizar su perfil, sin necesidad de ser admin
