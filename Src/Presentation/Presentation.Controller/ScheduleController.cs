@@ -42,13 +42,12 @@ namespace Presentation.Presentation.Controller
         {
             var schedule = dto.ToSchedule();
             var existingClass = await _classService.GetById(idClass);
-            if (existingClass == null)
-            {
-                return NotFound("Class not found");
-            }
+
             schedule.Id_Class = idClass;
+
             var created = await _service.Create(schedule);
-            return Ok(created.ToScheduleResponse (existingClass.Max_Users));
+
+            return Ok(created.ToScheduleResponse(existingClass.Max_Users));
         }
 
         [Authorize(Policy = Policies.AdminOSysAdmin)]
@@ -57,6 +56,15 @@ namespace Presentation.Presentation.Controller
         {
             var schedule = dto.ToSchedule();
             await _service.Update(id, schedule);
+
+            return NoContent();
+        }
+
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateScheduleStatusRequest dto)
+        {
+            await _service.UpdateStatus(id, dto.IsActive);
 
             return NoContent();
         }

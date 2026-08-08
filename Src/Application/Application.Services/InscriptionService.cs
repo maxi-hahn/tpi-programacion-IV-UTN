@@ -53,8 +53,26 @@ namespace Application.Services
                     ErrorMessage = "El horario no existe."
                 };
 
+            if (!selectedSchedule.IsActive)
+                return new InscriptionResult
+                {
+                    Success = false,
+                    code = "SCHEDULE_INACTIVE",
+                    ErrorMessage = "El horario está temporalmente deshabilitado."
+                };
+
             // 3. Obtener clase
             var gymClass = await _classRepo.GetById(selectedSchedule.Id_Class);
+          
+            if (!gymClass.IsActive)
+            {
+                return new InscriptionResult
+                {
+                    Success = false,
+                    code = "CLASS_DISABLED",
+                    ErrorMessage = "La clase está momentáneamente deshabilitada."
+                };
+            }
 
             if (gymClass == null)
                 return new InscriptionResult
@@ -64,6 +82,15 @@ namespace Application.Services
                     ErrorMessage = "La clase asociada al horario no existe."
                 };
 
+            if (!selectedSchedule.IsActive)
+            {
+                return new InscriptionResult
+                {
+                    Success = false,
+                    code = "SCHEDULE_DISABLED",
+                    ErrorMessage = "El horario está momentáneamente deshabilitado."
+                };
+            }
             // 4. Validar superposición
             var activeInscriptions = await _inscriptionRepo.GetByUserId(userId);
 

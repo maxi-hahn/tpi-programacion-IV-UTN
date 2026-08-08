@@ -18,6 +18,12 @@ namespace Infrastructure.Repositories
                 .Include(s => s.Inscriptions)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<Schedule>> GetByClassId(Guid classId)
+        {
+            return await _context.Schedules
+                .Where(s => s.Id_Class == classId)
+                .ToListAsync();
+        }
         public async Task<Schedule> Create(Schedule schedule)
         {
             await Add(schedule);

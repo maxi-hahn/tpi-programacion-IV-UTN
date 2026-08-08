@@ -24,7 +24,7 @@ namespace Application.Mapper
                 EnrolledUsers = enrolledUsers,
                 AvailableSpots = availableSpots,
                 IsFull = isFull,
-
+                IsActive = gymClass.IsActive,
                 Schedules = gymClass.Schedules?
                     .Select(s => s.ToScheduleResponse(gymClass.Max_Users, userId))
                     .ToList() ?? new()

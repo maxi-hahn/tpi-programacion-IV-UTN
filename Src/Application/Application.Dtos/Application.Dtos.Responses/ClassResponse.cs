@@ -14,6 +14,6 @@
         public bool IsFull { get; set; }
         public List<ScheduleResponse> Schedules { get; set; } = new();
 
-    
+        public bool IsActive { get; set; }
     }
 }

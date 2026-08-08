@@ -78,7 +78,20 @@ namespace Application.Services
 
             return true;
         }
+        public async Task<bool> UpdateStatus(Guid id, bool isActive)
+        {
+            var gymClass = await _repo.GetById(id);
 
+            if (gymClass == null)
+                throw new NotFoundException($"Class with ID {id} not found.");
+
+            gymClass.IsActive = isActive;
+
+            await _repo.Update(gymClass);
+            await _repo.Save();
+
+            return true;
+        }
         public async Task<bool> Delete(Guid id)
         {
             var gymClass = await _repo.GetById(id);

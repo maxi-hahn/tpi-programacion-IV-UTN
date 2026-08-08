@@ -11,6 +11,7 @@ namespace Application.Interfaces
         Task<Class> Create(Class gymClass);
 
         Task<bool> Update(Guid id, Class gymClass);
+        Task<bool> UpdateStatus(Guid id, bool isActive);
         Task<bool> Delete(Guid id);
     }
 }

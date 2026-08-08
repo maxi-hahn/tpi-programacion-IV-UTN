@@ -10,7 +10,8 @@ namespace Application.Interfaces
         Task<Schedule> Create(Schedule schedule);
 
         Task<bool> Update(Guid id, Schedule updatedSchedule);
-
+        Task<bool> UpdateStatus(Guid id, bool isActive);
         Task<bool> Delete(Guid id);
+
     }
 }

@@ -18,7 +18,7 @@ namespace Presentation.Presentation.Controller
         {
             _service = service;
         }
-
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult> Get()
         {
@@ -64,6 +64,14 @@ namespace Presentation.Presentation.Controller
             };
 
             await _service.Update(id, gymClass);
+
+            return NoContent();
+        }
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateClassStatusRequest dto)
+        {
+            await _service.UpdateStatus(id, dto.IsActive);
 
             return NoContent();
         }
