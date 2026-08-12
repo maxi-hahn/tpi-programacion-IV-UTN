@@ -17,7 +17,7 @@ public class UserService : IUserService
         _userContext = userContext;
     }
 
-    
+
     public async Task<User?> UpdateUser(UpdateUserRequest request)
     {
         var user = await _repo.GetById(_userContext.UserId);
@@ -35,6 +35,16 @@ public class UserService : IUserService
         !Regex.IsMatch(request.Email, patron))
         {
             throw new ValidationException("Invalid Email");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email) &&
+            !string.Equals(request.Email, user.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var existingUser = await GetByEmail(request.Email);
+            if (existingUser != null)
+            {
+                throw new ConflictException("Email is already in use");
+            }
         }
 
         user.Name = request.Name ?? user.Name;
