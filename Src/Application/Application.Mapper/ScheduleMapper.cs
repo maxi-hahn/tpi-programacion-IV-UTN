@@ -6,7 +6,10 @@ namespace Application.Mapper
 {
     public static class ScheduleMapper
     {
-        public static ScheduleResponse ToScheduleResponse(this Schedule schedule, int maxUsers, Guid? userId = null)
+        public static ScheduleResponse ToScheduleResponse(
+            this Schedule schedule,
+            int maxUsers,
+            Guid? userId = null)
         {
             var enrolledUsers = schedule.Inscriptions?
                 .Count(i => i.IsActive) ?? 0;
@@ -17,6 +20,8 @@ namespace Application.Mapper
                 DayOfWeek = (int)schedule.DayOfWeek,
                 StartTime = schedule.StartTime,
                 EndTime = schedule.EndTime,
+
+                IsActive = schedule.IsActive,
 
                 EnrolledUsers = enrolledUsers,
 

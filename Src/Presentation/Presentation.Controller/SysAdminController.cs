@@ -1,5 +1,7 @@
+using Application.Constants;
 using Application.Dtos.Request;
 using Application.Interfaces;
+using Application.Templates;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Presentation.Authorization;
@@ -13,10 +15,13 @@ namespace Presentation.Presentation.Controller
     {
         private readonly IUserService _service;
         private readonly ISysAdminService _sysAdminService;
-        public SysAdminController(IUserService service, ISysAdminService sysAdminService)
+        private readonly IEmailService _emailService;
+        public SysAdminController(IUserService service, ISysAdminService sysAdminService, IEmailService emailService)
         {
             _sysAdminService = sysAdminService;
             _service = service;
+            _emailService = emailService;
+
         }
 
         [Authorize]
@@ -31,18 +36,49 @@ namespace Presentation.Presentation.Controller
                 User = result.Email
             });
         }
-
-        [Authorize]
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPatch("ToggleUserStatus")]
-        public async Task<ActionResult> ToggleUserStatus(Guid userId)
+        public async Task<IActionResult> ToggleUserStatus([FromQuery] Guid userId)
         {
-            var result = await _sysAdminService.ToggleUserStatus(userId);
+            var user = await _service.GetById(userId);
+
+            if (user == null)
+                return NotFound(new { message = "Usuario no encontrado." });
+
+            // Cambiar estado
+            user.IsActive = !user.IsActive;
+            await _service.Update(userId, user);
+
+            // Enviar email de notificación
+            try
+            {
+                if (user.IsActive)
+                {
+                    await _emailService.SendEmailAsync(
+                        user.Email,
+                        EmailSubjects.userActivated,
+                        EmailTemplates.UserActivated(user.Name)
+                    );
+                }
+                else
+                {
+                    await _emailService.SendEmailAsync(
+                        user.Email,
+                        EmailSubjects.userDeactivated,
+                        EmailTemplates.UserDeactivated(user.Name)
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log del error pero no bloquear la operación
+                Console.WriteLine($"Error sending email: {ex.Message}");
+            }
 
             return Ok(new
             {
-                Message = "User status updated successfully",
-                Email = result.Email,
-                IsActive = result.IsActive,
+                message = user.IsActive ? "Usuario activado correctamente." : "Usuario desactivado correctamente.",
+                isActive = user.IsActive
             });
         }
 

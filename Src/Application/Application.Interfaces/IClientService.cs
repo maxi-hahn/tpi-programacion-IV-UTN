@@ -9,5 +9,7 @@ namespace Application.Interfaces
         Task UpdatePlan(Guid planId, Guid userId);
         Task<Client?> SubscribeToPlan(SubscribePlanRequest request);
         Task<ClientPlanResponse> GetMyPlanStatus();
+        Task<ClientPlanResponse> GetUserPlan(Guid userId);
+        Task RemoveUserPlan(Guid userId);
     }
 }

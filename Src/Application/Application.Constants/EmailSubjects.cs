@@ -16,5 +16,9 @@
 
         public const string subscriptionRenewed = "Tu suscripción ha sido renovada";
 
+        public const string userDeactivated = "Tu cuenta ha sido desactivada";
+
+        public const string userActivated = "Tu cuenta ha sido activada";
+
     }
 }

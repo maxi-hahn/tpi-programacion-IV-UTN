@@ -236,6 +236,45 @@ namespace Application.Services
             var inscriptions = await _inscriptionRepo.GetByUserIdWithClass(userId);
             return inscriptions.Select(i => i.ToMyInscriptionResponse());
         }
+
+        public async Task<InscriptionResult> UnsubscribeUser(Guid adminUserId, Guid targetUserId, Guid scheduleId)
+        {
+            // Verificar que el usuario objetivo existe
+            var targetUser = await _userRepo.GetById(targetUserId);
+            if (targetUser == null)
+            {
+                return new InscriptionResult
+                {
+                    Success = false,
+                    code = "USER_NOT_FOUND",
+                    ErrorMessage = "El usuario no existe."
+                };
+            }
+
+            // Obtener la inscripción
+            var inscription = await _inscriptionRepo.GetByUserAndSchedule(targetUserId, scheduleId);
+
+            if (inscription == null)
+            {
+                return new InscriptionResult
+                {
+                    Success = false,
+                    code = "NOT_ENROLLED",
+                    ErrorMessage = "El usuario no está inscripto en este horario."
+                };
+            }
+
+            // Desactivar la inscripción
+            await _inscriptionRepo.Unsubscribe(inscription);
+            await _inscriptionRepo.Save();
+
+            return new InscriptionResult
+            {
+                Success = true,
+                code = "UNSUBSCRIBE_SUCCESS",
+                Data = inscription.ToInscriptionResponse()
+            };
+        }
     }
 }
     

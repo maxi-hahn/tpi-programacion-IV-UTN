@@ -62,15 +62,19 @@ namespace Application.Services
             if (updatedClass.Max_Users <= 0)
                 throw new BadRequestException("Max_Users must be a positive number.");
 
-            if (string.IsNullOrWhiteSpace(updatedClass.Name))
-                throw new BadRequestException("Name cannot be empty.");
+            if (!string.IsNullOrWhiteSpace(updatedClass.Name))
+            {
+                gymClass.Name = updatedClass.Name;
+            }
 
-            var currentInscriptions = await _inscriptionRepo.CountActiveByClassId(id);
+            var currentInscriptions =
+                await _inscriptionRepo.CountActiveByClassId(id);
 
             if (updatedClass.Max_Users < currentInscriptions)
-                throw new ConflictException($"There are currently {currentInscriptions} registered users. Max_Users cannot be lower.");
+                throw new ConflictException(
+                    $"There are currently {currentInscriptions} registered users. Max_Users cannot be lower."
+                );
 
-            gymClass.Name = updatedClass.Name;
             gymClass.Max_Users = updatedClass.Max_Users;
 
             await _repo.Update(gymClass);

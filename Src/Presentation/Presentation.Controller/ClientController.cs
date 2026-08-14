@@ -1,5 +1,6 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Responses;
+using Application.Exceptions;
 using Application.Interfaces;
 using Application.Services;
 using Domain.Interface;
@@ -98,6 +99,36 @@ namespace Presentation.Presentation.Controller
         {
             var user = await _service.GetById(id);
             return Ok(user);
+        }
+
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
+        [HttpGet("{userId}/plan")]
+        public async Task<ActionResult<ClientPlanResponse>> GetUserPlan(Guid userId)
+        {
+            try
+            {
+                var result = await _clientService.GetUserPlan(userId);
+                return Ok(result);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
+        [HttpDelete("{userId}/plan")]
+        public async Task<ActionResult> RemoveUserPlan(Guid userId)
+        {
+            try
+            {
+                await _clientService.RemoveUserPlan(userId);
+                return Ok(new { message = "Plan removido correctamente." });
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
     }
 }

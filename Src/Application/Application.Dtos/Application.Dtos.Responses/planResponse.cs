@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Application.Dtos.Responses
+﻿namespace Application.Dtos.Responses
 {
     public class PlanResponse
     {

@@ -70,5 +70,26 @@
 
             <p>Para volver a inscribirte en clases deberás renovar tu plan.</p>";
         }
+        public static string UserDeactivated(string userName)
+        {
+            return $@"
+            <h2>Hola {userName}</h2>
+
+            <p>Tu cuenta ha sido <strong>desactivada</strong> por un administrador.</p>
+
+            <p>Si crees que esto es un error, por favor contacta con soporte.</p>
+
+            <p>No podrás acceder al sistema hasta que tu cuenta sea reactivada.</p>";
+        }
+
+        public static string UserActivated(string userName)
+        {
+            return $@"
+            <h2>Hola {userName}</h2>
+
+            <p>Tu cuenta ha sido <strong>activada</strong> nuevamente.</p>
+
+            <p>Ya puedes acceder al sistema y disfrutar de nuestros servicios.</p>";
+        }
     }
 }

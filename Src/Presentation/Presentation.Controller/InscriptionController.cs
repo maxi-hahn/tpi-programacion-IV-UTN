@@ -6,7 +6,6 @@ using Presentation.Authorization;
 
 namespace Presentation.Presentation.Controller
 {
-    [Authorize(Policy = Policies.SoloClient)]
     [ApiController]
     [Route("api/[controller]")]
     public class InscriptionController : ControllerBase
@@ -20,6 +19,7 @@ namespace Presentation.Presentation.Controller
             _userContext = userContext;
         }
 
+        [Authorize(Policy = Policies.SoloClient)]
         [HttpPost]
         public async Task<IActionResult> Inscribe([FromBody] InscriptionRequest request)
         {
@@ -40,6 +40,8 @@ namespace Presentation.Presentation.Controller
                 data = result.Data
             });
         }
+
+        [Authorize(Policy = Policies.SoloClient)]
         [HttpDelete("{scheduleId}")]
         public async Task<IActionResult> Unsubscribe(Guid scheduleId)
         {
@@ -51,11 +53,43 @@ namespace Presentation.Presentation.Controller
             return Ok(result);
         }
 
+        [Authorize(Policy = Policies.SoloClient)]
         [HttpGet("me")]
         public async Task<IActionResult> GetMyInscriptions()
         {
             var result = await _service.GetMyInscriptions(_userContext.UserId);
             return Ok(result);
+        }
+
+        // Endpoints para administradores
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetUserInscriptions(Guid userId)
+        {
+            var result = await _service.GetMyInscriptions(userId);
+            return Ok(result);
+        }
+
+        [Authorize(Policy = Policies.AdminOSysAdmin)]
+        [HttpDelete("user/{userId}/{scheduleId}")]
+        public async Task<IActionResult> UnsubscribeUser(Guid userId, Guid scheduleId)
+        {
+            var adminUserId = _userContext.UserId;
+            var result = await _service.UnsubscribeUser(adminUserId, userId, scheduleId);
+
+            if (!result.Success)
+                return BadRequest(new
+                {
+                    code = result.code,
+                    message = result.ErrorMessage
+                });
+
+            return Ok(new
+            {
+                code = result.code,
+                message = "Usuario desinscripto correctamente.",
+                data = result.Data
+            });
         }
     }
 }
