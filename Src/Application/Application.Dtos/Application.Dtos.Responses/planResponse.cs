@@ -7,5 +7,6 @@
         public float Value { get; set; }
         public int Max_Class { get; set; }
         public bool IsUnlimited { get; set; }
+        public string Benefits { get; set; } = string.Empty;  
     }
 }

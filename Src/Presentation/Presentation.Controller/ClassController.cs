@@ -22,16 +22,30 @@ namespace Presentation.Presentation.Controller
         [HttpGet]
         public async Task<ActionResult> Get()
         {
-            Guid? userId = null;
-
-            if (User.Identity?.IsAuthenticated == true)
+            try
             {
-                userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+                Guid? userId = null;
+
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+                }
+
+                var classes = await _service.GetAll();
+
+                var response = classes.Select(c => c.ToClassResponse(userId));
+                return Ok(response);
             }
-
-            var classes = await _service.GetAll();
-
-            return Ok(classes.Select(c => c.ToClassResponse(userId)));
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en ClassController.Get: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                return StatusCode(500, new { error = ex.Message });
+            }
         }
 
         [AllowAnonymous]

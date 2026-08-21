@@ -23,18 +23,25 @@ namespace Presentation.Presentation.Controller
         [HttpGet]
         public async Task<ActionResult> Get()
         {
-            var schedules = await _service.GetAll();
-            return Ok(schedules.Select(s => s.ToScheduleResponse(s.Class?.Max_Users ?? 0)));
-        }
+            Guid? userId = null;
 
-//        [AllowAnonymous]
-//        [HttpGet("{id}")]
-//        public async Task<ActionResult> GetById(Guid id)
- //       {
-  //          var schedule = await _service.GetById(id);
-//
-   //         return Ok(schedule);
-   //     }
+            // Si el usuario está autenticado, obtener su ID
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                userId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            }
+
+            var schedules = await _service.GetAll();
+            return Ok(schedules.Select(s => s.ToScheduleResponse(s.Class?.Max_Users ?? 0, userId)));
+        }
+        //        [AllowAnonymous]
+        //        [HttpGet("{id}")]
+        //        public async Task<ActionResult> GetById(Guid id)
+        //       {
+        //          var schedule = await _service.GetById(id);
+        //
+        //         return Ok(schedule);
+        //     }
 
         [Authorize(Policy = Policies.AdminOSysAdmin)]
         [HttpPost]

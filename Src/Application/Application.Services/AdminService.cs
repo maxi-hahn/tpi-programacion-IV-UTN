@@ -42,20 +42,21 @@ namespace Application.Services
 
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new ValidationException("Plan name is required");
-            if (request.Max_Clases < 0 || request.Max_Clases > 100)
+            if (request.Max_Class < 0 || request.Max_Class > 100)
                 throw new ValidationException("Max classes must be between 0 and 100");
             if (request.Value <= 0)
                 throw new ValidationException("Plan value must be greater than zero");
 
             plan_id.Name = request.Name;
-            plan_id.Max_Class = request.Max_Clases;
+            plan_id.Max_Class = request.Max_Class;
             plan_id.Value = request.Value;
+            plan_id.IsUnlimited = request.IsUnlimited;
+            plan_id.Benefits = request.Benefits ?? string.Empty;
 
             await _planRepo.Update(plan_id);
             await _planRepo.Save();
 
             return plan_id;
-
         }
 
         public async Task<Plan?> CreatePlan(CreatePlanAdminRequest request)
@@ -69,16 +70,17 @@ namespace Application.Services
             if (request.Value <= 0)
                 throw new ValidationException("Plan value must be greater than zero");
 
-            if (request.Max_Clases < 0)
+            if (request.Max_Class < 0)
                 throw new ValidationException("Max classes cannot be negative");
 
             var plan = new Plan
             {
                 Name = request.Name,
-                Max_Class = request.Max_Clases,
-                Value = request.Value
+                Max_Class = request.Max_Class,
+                Value = request.Value,
+                IsUnlimited = request.IsUnlimited,
+                Benefits = request.Benefits ?? string.Empty
             };
-
 
             await _planRepo.Add(plan);
             await _planRepo.Save();

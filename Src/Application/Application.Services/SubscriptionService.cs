@@ -21,39 +21,43 @@ namespace Application.Services
         {
             var clients = await _userRepo.GetAll();
 
-            var expiredClients = clients
+            var activeClients = clients
                 .OfType<Client>()
                 .Where(c =>
                     c.IsActive &&
-                    c.SubscriptionEndDate.HasValue &&
-                    c.SubscriptionEndDate.Value < DateTime.UtcNow);
+                    c.SubscriptionEndDate.HasValue);
 
-
-            foreach (var client in expiredClients)
+            foreach (var client in activeClients)
             {
-                client.IsActive = false;
-                if (client.SubscriptionEndDate == null)
-                    continue;
+                var daysLeft = (client.SubscriptionEndDate!.Value.Date - DateTime.UtcNow.Date).Days;
 
-                var daysLeft = (client.SubscriptionEndDate.Value.Date - DateTime.UtcNow.Date).Days;
-
-                // Aviso 3 dias antes
-
+                // Caso 1: Aviso 3 días antes del vencimiento
                 if (daysLeft == 3)
                 {
-                    await _emailService.SendEmailAsync(client.Email, EmailSubjects.SubscriptionExpiring, EmailTemplates.SubscriptionExpiring(client.Name, client.SubscriptionEndDate.Value, daysLeft));
+                    await _emailService.SendEmailAsync(
+                        client.Email,
+                        EmailSubjects.SubscriptionExpiring,
+                        EmailTemplates.SubscriptionExpiring(
+                            client.Name,
+                            client.SubscriptionEndDate.Value,
+                            daysLeft));
                 }
-
-                // Suscripcion vencida
-
-                if (daysLeft < 0 && client.IsActive)
+                // Caso 2: Suscripción vencida
+                else if (daysLeft < 0)
                 {
                     client.IsActive = false;
 
-                    await _emailService.SendEmailAsync(client.Email, EmailSubjects.SubscriptionExpired, EmailTemplates.SubscriptionExpired(client.Name));
+                    await _emailService.SendEmailAsync(
+                        client.Email,
+                        EmailSubjects.SubscriptionExpired,
+                        EmailTemplates.SubscriptionExpired(client.Name));
+
                     await _userRepo.Update(client);
                 }
             }
+
+            // Guardar todos los cambios pendientes
+            await _userRepo.Save();
         }
     }
 }

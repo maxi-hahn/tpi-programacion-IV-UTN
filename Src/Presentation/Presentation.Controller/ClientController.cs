@@ -29,23 +29,31 @@ namespace Presentation.Presentation.Controller
 
         [HttpPost("webhook/mercadopago")]
         public async Task<IActionResult> Webhook(
-            [FromQuery] string? topic,
-            [FromQuery] string? type,
-            [FromQuery] string? id)
+    [FromQuery] string? topic,
+    [FromQuery] string? type,
+    [FromQuery] string? id)
         {
-            var eventType = topic ?? type;
+            try
+            {
+                var eventType = topic ?? type;
 
-            if (eventType != "payment")
+                if (eventType != "payment")
+                    return Ok();
+
+                if (string.IsNullOrEmpty(id))
+                    return Ok();
+
+                await _mercadoPagoService.ProcessPayment(id);
                 return Ok();
-
-            if (string.IsNullOrEmpty(id))
+            }
+            catch (Exception ex)
+            {
+                // Log del error pero devolver 200 para que Mercado Pago no reintente
+                Console.WriteLine($"Error procesando webhook: {ex.Message}");
                 return Ok();
-
-            await _mercadoPagoService.ProcessPayment(id);
-
-            return Ok();
+            }
         }
-        
+
         [Authorize(Policy = Policies.SoloClient)]
         [HttpPost("BuyPlan")]
         public async Task<IActionResult> CreatePayment(Guid planId)

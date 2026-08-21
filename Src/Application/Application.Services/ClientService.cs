@@ -10,12 +10,14 @@ namespace Application.Services
     {
         private readonly IUserRepository _userRepo;
         private readonly IPlanRepository _planRepo;
+        private readonly IInscriptionRepository _inscriptionRepo;
 
-        public ClientService(IUserRepository userRepo, IPasswordHasherService hasher, IUserContext userContext, IPlanRepository planRepo)
+        public ClientService(IUserRepository userRepo, IPasswordHasherService hasher, IUserContext userContext, IPlanRepository planRepo, IInscriptionRepository inscriptionRepo)
             : base(userRepo, hasher, userContext)
         {
             _userRepo = userRepo;
             _planRepo = planRepo;
+            _inscriptionRepo = inscriptionRepo;
         }
 
         public async Task UpdatePlan(Guid planId, Guid userId)
@@ -25,6 +27,8 @@ namespace Application.Services
                 throw new NotFoundException("Client not found");
 
             client.Id_Plan = planId;
+            client.SubscriptionStartDate = DateTime.UtcNow;
+            client.SubscriptionEndDate = DateTime.UtcNow.AddMonths(1);
             client.IsActive = true;
             await _userRepo.Update(client);
             await _userRepo.Save();
@@ -108,6 +112,8 @@ namespace Application.Services
             float? planValue = null;
             int? planMaxClass = null;
             bool? planIsUnlimited = null;
+            string? planBenefits = null;
+            int? classesRemaining = null;
 
             if (client.Id_Plan.HasValue)
             {
@@ -118,6 +124,23 @@ namespace Application.Services
                     planValue = plan.Value;
                     planMaxClass = plan.Max_Class;
                     planIsUnlimited = plan.IsUnlimited;
+                    planBenefits = plan.Benefits;
+
+                    // Calcular cupos restantes
+                    if (!plan.IsUnlimited)
+                    {
+                        var periodStart = client.SubscriptionStartDate ?? DateTime.UtcNow.AddMonths(-1);
+                        var periodEnd = client.SubscriptionEndDate ?? DateTime.UtcNow;
+
+                        // Obtener inscripciones consumidas del período
+                        var inscriptions = await _inscriptionRepo.GetByUserId(client.Id);
+                        var consumedClasses = inscriptions.Count(i =>
+                            i.IsConsumed &&
+                            i.InscriptionDate >= periodStart &&
+                            i.InscriptionDate <= periodEnd);
+
+                        classesRemaining = Math.Max(0, plan.Max_Class - consumedClasses);
+                    }
                 }
             }
 
@@ -128,6 +151,8 @@ namespace Application.Services
                 PlanValue = planValue,
                 PlanMaxClass = planMaxClass,
                 PlanIsUnlimited = planIsUnlimited,
+                PlanBenefits = planBenefits,
+                ClassesRemaining = classesRemaining,
                 IsActive = client.IsActive,
                 SubscriptionStartDate = client.SubscriptionStartDate,
                 SubscriptionEndDate = client.SubscriptionEndDate,

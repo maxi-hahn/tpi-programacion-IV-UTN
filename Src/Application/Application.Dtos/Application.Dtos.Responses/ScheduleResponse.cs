@@ -15,7 +15,7 @@
         public int EnrolledUsers { get; set; }
 
         public int AvailableSpots { get; set; }
-
+        public DateTimeOffset NextClassDate { get; set; }
         public bool IsFull { get; set; }
         public bool IsEnrolled { get; set; }
     }

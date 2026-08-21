@@ -15,7 +15,9 @@ namespace Application.Mapper
                 ClassId = inscription.ClassId,
                 ScheduleId = inscription.ScheduleId,
                 InscriptionDate = inscription.InscriptionDate,
-                IsActive = inscription.IsActive
+                ClassDate = inscription.ClassDate,
+                IsActive = inscription.IsActive,
+                IsConsumed = inscription.IsConsumed  // NUEVO
             };
         }
 
@@ -27,19 +29,11 @@ namespace Application.Mapper
                 ClassId = inscription.ClassId,
                 ClassName = inscription.Class?.Name ?? string.Empty,
                 ScheduleId = inscription.ScheduleId,
-                Schedule = inscription.Schedule?.ToScheduleResponse (inscription.Class?.Max_Users ?? 0),
-                InscriptionDate = inscription.InscriptionDate
-            };
-        }
-
-        public static Inscription ToInscription(this InscriptionRequest request)
-        {
-            return new Inscription
-            {
-                Id = Guid.NewGuid(),
-                ScheduleId = request.ScheduleId,
-                InscriptionDate = DateTime.UtcNow,
-                IsActive = true
+                Schedule = inscription.Schedule?.ToScheduleResponse(inscription.Class?.Max_Users ?? 0),
+                InscriptionDate = inscription.InscriptionDate,
+                ClassDate = inscription.ClassDate,
+                IsActive = inscription.IsActive,
+                IsConsumed = inscription.IsConsumed
             };
         }
     }

@@ -16,7 +16,8 @@ namespace Application.Mapper
                 Name = plan.Name,
                 Value = plan.Value,
                 Max_Class = plan.Max_Class,
-                IsUnlimited = plan.IsUnlimited
+                IsUnlimited = plan.IsUnlimited,
+                Benefits = plan.Benefits  
             };
         }
     }

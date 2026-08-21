@@ -20,7 +20,7 @@ namespace Domain.Interface
         Task<bool> ExistsByClassId(Guid classId);
 
         Task<int> CountActiveByClassId(Guid classId);
-
-        Task Unsubscribe(Inscription inscription);
+        Task<Inscription?> GetByUserScheduleAndDate(Guid userId, Guid scheduleId, DateTime classDate);
+        Task<IEnumerable<Inscription>> GetByScheduleAndDate(Guid scheduleId, DateTime classDate);
     }
 }

@@ -8,28 +8,43 @@ namespace Application.Mapper
     {
         public static ClassResponse ToClassResponse(this Class gymClass, Guid? userId = null)
         {
-            var enrolledUsers = gymClass.Schedules?
-                .SelectMany(s => s.Inscriptions)
-                .Count(i => i.IsActive) ?? 0;
+            // Calcular próxima fecha para cada horario y contar cupos correctamente
+            var totalEnrolledUsers = 0;
+            var totalAvailableSpots = 0;
+            var hasAnyAvailable = false;
 
-            var totalMaxUsers = (gymClass.Schedules?.Count ?? 0) * gymClass.Max_Users;
-            var availableSpots = Math.Max(0, totalMaxUsers - enrolledUsers);
-            var isFull = (gymClass.Schedules?.Count ?? 0) > 0 && availableSpots == 0;
+            var schedules = gymClass.Schedules?
+                .Select(s => {
+                    var scheduleResponse = s.ToScheduleResponse(gymClass.Max_Users, userId);
+
+                    // Acumular para el resumen de la clase
+                    totalEnrolledUsers += scheduleResponse.EnrolledUsers;
+                    totalAvailableSpots += scheduleResponse.AvailableSpots;
+
+                    if (!scheduleResponse.IsFull && scheduleResponse.IsActive)
+                    {
+                        hasAnyAvailable = true;
+                    }
+
+                    return scheduleResponse;
+                })
+                .ToList() ?? new();
+
+            var isFull = schedules.Count > 0 && !hasAnyAvailable;
 
             return new ClassResponse
             {
                 Id = gymClass.Id,
                 Name = gymClass.Name,
                 Max_Users = gymClass.Max_Users,
-                EnrolledUsers = enrolledUsers,
-                AvailableSpots = availableSpots,
+                EnrolledUsers = totalEnrolledUsers,
+                AvailableSpots = totalAvailableSpots,
                 IsFull = isFull,
                 IsActive = gymClass.IsActive,
-                Schedules = gymClass.Schedules?
-                    .Select(s => s.ToScheduleResponse(gymClass.Max_Users, userId))
-                    .ToList() ?? new()
+                Schedules = schedules
             };
         }
+
         public static ClassDetailResponse ToClassDetailResponse(this Class gymClass, int currentInscriptions, List<ClientInfoResponse> clients)
         {
             return new ClassDetailResponse
@@ -39,8 +54,8 @@ namespace Application.Mapper
                 Max_Users = gymClass.Max_Users,
                 CurrentInscriptions = currentInscriptions,
                 Schedules = gymClass.Schedules
-                .Select(s => s.ToScheduleResponse(gymClass.Max_Users))
-                .ToList(),
+                    .Select(s => s.ToScheduleResponse(gymClass.Max_Users))
+                    .ToList(),
                 Clients = clients
             };
         }

@@ -61,18 +61,8 @@ namespace Application.Services
                     ErrorMessage = "El horario está temporalmente deshabilitado."
                 };
 
-            // 3. Obtener clase
+            // 3. Obtener clase (corregido: null check primero)
             var gymClass = await _classRepo.GetById(selectedSchedule.Id_Class);
-          
-            if (!gymClass.IsActive)
-            {
-                return new InscriptionResult
-                {
-                    Success = false,
-                    code = "CLASS_DISABLED",
-                    ErrorMessage = "La clase está momentáneamente deshabilitada."
-                };
-            }
 
             if (gymClass == null)
                 return new InscriptionResult
@@ -82,16 +72,29 @@ namespace Application.Services
                     ErrorMessage = "La clase asociada al horario no existe."
                 };
 
-            if (!selectedSchedule.IsActive)
+            if (!gymClass.IsActive)
+                return new InscriptionResult
+                {
+                    Success = false,
+                    code = "CLASS_DISABLED",
+                    ErrorMessage = "La clase está momentáneamente deshabilitada."
+                };
+
+            // 4. Calcular próxima ocurrencia
+            var classDate = GetNextOccurrence(selectedSchedule.DayOfWeek, selectedSchedule.StartTime);
+
+            // NUEVO: Validar que la clase no haya pasado
+            if (classDate < DateTime.Now)
             {
                 return new InscriptionResult
                 {
                     Success = false,
-                    code = "SCHEDULE_DISABLED",
-                    ErrorMessage = "El horario está momentáneamente deshabilitado."
+                    code = "CLASS_ALREADY_PASSED",
+                    ErrorMessage = "No se puede inscribir a una clase que ya pasó."
                 };
             }
-            // 4. Validar superposición
+
+            // 5. Validar superposición (solo para la misma fecha)
             var activeInscriptions = await _inscriptionRepo.GetByUserId(userId);
 
             foreach (var inscription in activeInscriptions.Where(i => i.IsActive))
@@ -101,6 +104,10 @@ namespace Application.Services
                 if (existingSchedule == null)
                     continue;
 
+                // Solo verificar superposición si es la misma fecha de clase
+                if (inscription.ClassDate.Date != classDate.Date)
+                    continue;
+
                 bool overlaps =
                     selectedSchedule.DayOfWeek == existingSchedule.DayOfWeek &&
                     selectedSchedule.StartTime < existingSchedule.EndTime &&
@@ -108,38 +115,43 @@ namespace Application.Services
 
                 if (overlaps)
                 {
+                    var overlappingClass = await _classRepo.GetById(existingSchedule.Id_Class);
+                    var className = overlappingClass?.Name ?? "otra clase";
+
                     return new InscriptionResult
                     {
                         Success = false,
                         code = "SCHEDULE_OVERLAP",
-                        ErrorMessage = "El horario se superpone con otra inscripción existente."
+                        ErrorMessage = $"El horario se superpone con {className} ({existingSchedule.DayOfWeek} {existingSchedule.StartTime}-{existingSchedule.EndTime})."
                     };
                 }
             }
 
-            // 5. Ya inscripto
-            var existing = await _inscriptionRepo.GetByUserAndSchedule(userId, request.ScheduleId);
+            // 6. Ya inscripto para esa fecha
+            var existing = await _inscriptionRepo.GetByUserScheduleAndDate(userId, request.ScheduleId, classDate);
 
-            if (existing != null && existing.IsActive)
+            if (existing != null)
                 return new InscriptionResult
                 {
                     Success = false,
                     code = "ALREADY_ENROLLED",
-                    ErrorMessage = "El cliente ya está inscripto en este horario."
+                    ErrorMessage = "El cliente ya está inscripto en este horario para la próxima clase."
                 };
 
-            // 6. Cupos
-            var inscriptions = await _inscriptionRepo.GetByScheduleId(request.ScheduleId);
+            // 7. Cupos de la clase por fecha
+            var inscriptionsForDate = await _inscriptionRepo.GetByScheduleAndDate(request.ScheduleId, classDate);
 
-            if (inscriptions.Count(i => i.IsActive) >= gymClass.Max_Users)
+            var enrolledForDate = inscriptionsForDate.Count();
+
+            if (enrolledForDate >= gymClass.Max_Users)
                 return new InscriptionResult
                 {
                     Success = false,
                     code = "CLASS_FULL",
-                    ErrorMessage = "La clase no tiene cupos disponibles."
+                    ErrorMessage = "La clase no tiene cupos disponibles para esta fecha."
                 };
 
-            // 7. Plan
+            // 8. Plan
             if (client.Id_Plan == null)
                 return new InscriptionResult
                 {
@@ -168,9 +180,15 @@ namespace Application.Services
 
             if (!plan.IsUnlimited)
             {
-                var activeCount = activeInscriptions.Count(i => i.IsActive);
+                var periodStart = client.SubscriptionStartDate ?? DateTime.UtcNow.AddMonths(-1);
+                var periodEnd = client.SubscriptionEndDate ?? DateTime.UtcNow;
 
-                if (activeCount >= plan.Max_Class)
+                var classesUsedInPeriod = activeInscriptions.Count(i =>
+                    i.IsConsumed &&  // Cambio: contar consumidas, no activas
+                    i.InscriptionDate >= periodStart &&
+                    i.InscriptionDate <= periodEnd);
+
+                if (classesUsedInPeriod >= plan.Max_Class)
                     return new InscriptionResult
                     {
                         Success = false,
@@ -179,7 +197,7 @@ namespace Application.Services
                     };
             }
 
-            // 8. Email
+            // 9. Email
             if (!client.EmailVerified)
                 return new InscriptionResult
                 {
@@ -188,7 +206,7 @@ namespace Application.Services
                     ErrorMessage = "El cliente debe tener el email verificado para poder inscribirse."
                 };
 
-            // 9. Crear inscripción
+            // 10. Crear inscripción con ClassDate
             var inscriptionToCreate = new Inscription
             {
                 Id = Guid.NewGuid(),
@@ -196,8 +214,11 @@ namespace Application.Services
                 ClassId = gymClass.Id,
                 ScheduleId = request.ScheduleId,
                 InscriptionDate = DateTime.UtcNow,
-                IsActive = true
+                ClassDate = classDate, // DateTime normal, se guarda bien en BD
+                IsActive = true,
+                IsConsumed = true  
             };
+
             await _inscriptionRepo.Add(inscriptionToCreate);
             await _inscriptionRepo.Save();
 
@@ -208,6 +229,7 @@ namespace Application.Services
                 Data = inscriptionToCreate.ToInscriptionResponse()
             };
         }
+
         public async Task<InscriptionResult> Unsubscribe(Guid userId, Guid scheduleId)
         {
             var inscription = await _inscriptionRepo.GetByUserAndSchedule(userId, scheduleId);
@@ -221,25 +243,63 @@ namespace Application.Services
                     ErrorMessage = "El cliente no está inscripto en este horario."
                 };
             }
+            // Verificar si la clase ya pasó
+            if (inscription.ClassDate < DateTime.Now)
+            {
+                return new InscriptionResult
+                {
+                    Success = false,
+                    code = "CLASS_ALREADY_PASSED",
+                    ErrorMessage = "No se puede cancelar una clase que ya pasó."
+                };
+            }
 
-            await _inscriptionRepo.Unsubscribe(inscription);
+            // Calcular tiempo desde la inscripción
+            var timeSinceEnrollment = DateTime.UtcNow - inscription.InscriptionDate;
+            // Calcular días de anticipación
+            var daysUntilClass = (inscription.ClassDate.Date - DateTime.Now.Date).Days;
+
+            // Cancelar la inscripción
+            inscription.IsActive = false;
+
+            // Regla: Si cancela dentro de 30 minutos, recupera cupo
+            if (timeSinceEnrollment.TotalMinutes <= 30)
+            {
+                inscription.IsConsumed = false;
+            }
+            // Regla: Más de 3 días de anticipación, recupera cupo
+            else if (daysUntilClass > 3)
+            {
+                inscription.IsConsumed = false;
+            }
+            // Regla: 3 días o menos, pierde cupo
+            else
+            {
+                inscription.IsConsumed = true;
+            }
+
+            await _inscriptionRepo.Update(inscription);
             await _inscriptionRepo.Save();
 
             return new InscriptionResult
             {
                 Success = true,
+                code = "UNSUBSCRIBE_SUCCESS",
                 Data = inscription.ToInscriptionResponse()
             };
         }
+
         public async Task<IEnumerable<MyInscriptionResponse>> GetMyInscriptions(Guid userId)
         {
             var inscriptions = await _inscriptionRepo.GetByUserIdWithClass(userId);
+
+            // Devolver TODAS las inscripciones (pasadas y futuras)
+            // El frontend decidirá cómo mostrarlas
             return inscriptions.Select(i => i.ToMyInscriptionResponse());
         }
 
         public async Task<InscriptionResult> UnsubscribeUser(Guid adminUserId, Guid targetUserId, Guid scheduleId)
         {
-            // Verificar que el usuario objetivo existe
             var targetUser = await _userRepo.GetById(targetUserId);
             if (targetUser == null)
             {
@@ -251,7 +311,6 @@ namespace Application.Services
                 };
             }
 
-            // Obtener la inscripción
             var inscription = await _inscriptionRepo.GetByUserAndSchedule(targetUserId, scheduleId);
 
             if (inscription == null)
@@ -264,8 +323,26 @@ namespace Application.Services
                 };
             }
 
-            // Desactivar la inscripción
-            await _inscriptionRepo.Unsubscribe(inscription);
+            // El admin puede cancelar en cualquier momento
+            var timeSinceEnrollment = DateTime.UtcNow - inscription.InscriptionDate;
+            var daysUntilClass = (inscription.ClassDate.Date - DateTime.Now.Date).Days;
+
+            inscription.IsActive = false;
+
+            if (timeSinceEnrollment.TotalMinutes <= 30)
+            {
+                inscription.IsConsumed = false;
+            }
+            else if (daysUntilClass > 3)
+            {
+                inscription.IsConsumed = false;
+            }
+            else
+            {
+                inscription.IsConsumed = true;
+            }
+
+            await _inscriptionRepo.Update(inscription);
             await _inscriptionRepo.Save();
 
             return new InscriptionResult
@@ -275,6 +352,34 @@ namespace Application.Services
                 Data = inscription.ToInscriptionResponse()
             };
         }
+
+        // Método privado para calcular la próxima ocurrencia
+        private DateTime GetNextOccurrence(Day dayOfWeek, TimeOnly startTime)
+        {
+            var now = DateTime.Now;
+
+            DayOfWeek targetDayOfWeek = dayOfWeek switch
+            {
+                Day.Lunes => DayOfWeek.Monday,
+                Day.Martes => DayOfWeek.Tuesday,
+                Day.Miercoles => DayOfWeek.Wednesday,
+                Day.Jueves => DayOfWeek.Thursday,
+                Day.Viernes => DayOfWeek.Friday,
+                Day.Sabado => DayOfWeek.Saturday,
+                Day.Domingo => DayOfWeek.Sunday,
+                _ => DayOfWeek.Monday
+            };
+
+            var currentDay = now.DayOfWeek;
+            var daysUntilTarget = ((int)targetDayOfWeek - (int)currentDay + 7) % 7;
+            var nextDate = now.Date.AddDays(daysUntilTarget);
+
+            if (daysUntilTarget == 0 && now.TimeOfDay > startTime.ToTimeSpan())
+            {
+                nextDate = nextDate.AddDays(7);
+            }
+
+            return nextDate.Add(startTime.ToTimeSpan());
+        }
     }
 }
-    

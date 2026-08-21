@@ -11,7 +11,7 @@
         public int Max_Class { get; set; }
 
         public bool IsUnlimited { get; set; } = false;
-
+        public string Benefits { get; set; } = string.Empty; // Separados por coma o JSON
 
     }
 }
