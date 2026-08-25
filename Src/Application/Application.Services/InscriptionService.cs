@@ -14,19 +14,22 @@ namespace Application.Services
         private readonly IUserRepository _userRepo;
         private readonly IPlanRepository _planRepo;
         private readonly IScheduleRepository _scheduleRepo;
+        private readonly INotificationService _notificationService;
 
         public InscriptionService(
             IInscriptionRepository inscriptionRepo,
             IClassRepository classRepo,
             IUserRepository userRepo,
             IPlanRepository planRepo,
-            IScheduleRepository scheduleRepo)
+            IScheduleRepository scheduleRepo,
+            INotificationService notificationService)
         {
             _inscriptionRepo = inscriptionRepo;
             _classRepo = classRepo;
             _userRepo = userRepo;
             _planRepo = planRepo;
             _scheduleRepo = scheduleRepo;
+            _notificationService = notificationService;
         }
 
         public async Task<InscriptionResult> Inscribe(Guid userId, InscriptionRequest request)
@@ -222,6 +225,12 @@ namespace Application.Services
             await _inscriptionRepo.Add(inscriptionToCreate);
             await _inscriptionRepo.Save();
 
+            await _notificationService.CreateNotification(
+                userId,
+                "Inscripción exitosa",
+                $"Te inscribiste a la clase del {classDate:dd/MM/yyyy} a las {classDate:HH:mm}.",
+                "EnrollmentSuccess");
+
             return new InscriptionResult
             {
                 Success = true,
@@ -280,6 +289,12 @@ namespace Application.Services
 
             await _inscriptionRepo.Update(inscription);
             await _inscriptionRepo.Save();
+
+            await _notificationService.CreateNotification(
+                userId,
+                "Inscripción cancelada",
+                $"Cancelaste tu inscripción a la clase del {inscription.ClassDate:dd/MM/yyyy} a las {inscription.ClassDate:HH:mm}.",
+                "EnrollmentCancelled");
 
             return new InscriptionResult
             {

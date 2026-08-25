@@ -60,6 +60,7 @@ builder.Services.AddScoped<IPlanRepository, PlanRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<ISysAdminService, SysAdminService>();
 builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 
 // 3. Servicios de Aplicación (Lógica de Negocio)
@@ -73,6 +74,7 @@ builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IInscriptionService, InscriptionService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 //Servicios de utilidad

@@ -22,5 +22,7 @@ namespace Domain.Interface
         Task<int> CountActiveByClassId(Guid classId);
         Task<Inscription?> GetByUserScheduleAndDate(Guid userId, Guid scheduleId, DateTime classDate);
         Task<IEnumerable<Inscription>> GetByScheduleAndDate(Guid scheduleId, DateTime classDate);
+
+        Task<IEnumerable<Inscription>> GetPastActiveInscriptions(DateTime date);
     }
 }

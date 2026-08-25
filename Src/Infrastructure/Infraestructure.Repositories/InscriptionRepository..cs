@@ -103,5 +103,13 @@ namespace Infrastructure.Repositories
                 i.ClassId == classId &&
                 i.IsActive);
         }
+
+        public async Task<IEnumerable<Inscription>> GetPastActiveInscriptions(DateTime date)
+        {
+            return await _context.Inscriptions
+                .Include(i => i.Schedule)
+                .Where(i => i.IsActive && i.ClassDate < date)
+                .ToListAsync();
+        }
     }
 }

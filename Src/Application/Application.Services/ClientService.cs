@@ -26,10 +26,20 @@ namespace Application.Services
             if (client == null)
                 throw new NotFoundException("Client not found");
 
+            var hasActivePlan = client.IsActive &&
+                                client.SubscriptionEndDate.HasValue &&
+                                client.SubscriptionEndDate.Value > DateTime.Now;
+
             client.Id_Plan = planId;
-            client.SubscriptionStartDate = DateTime.UtcNow;
-            client.SubscriptionEndDate = DateTime.UtcNow.AddMonths(1);
             client.IsActive = true;
+
+            // If the client has an active plan, keep the current cycle (only swap plan)
+            if (!hasActivePlan)
+            {
+                client.SubscriptionStartDate = DateTime.Now;
+                client.SubscriptionEndDate = DateTime.Now.AddMonths(1);
+            }
+
             await _userRepo.Update(client);
             await _userRepo.Save();
         }
@@ -65,10 +75,19 @@ namespace Application.Services
             if (plan == null)
                 throw new NotFoundException("Plan not found");
 
+            var hasActivePlan = client.IsActive &&
+                                client.SubscriptionEndDate.HasValue &&
+                                client.SubscriptionEndDate.Value > DateTime.Now;
+
             client.Id_Plan = plan.Id;
-            client.SubscriptionStartDate = DateTime.UtcNow;
-            client.SubscriptionEndDate = DateTime.UtcNow.AddMonths(1);
             client.IsActive = true;
+
+            // If the client has an active plan, keep the current cycle (only swap plan)
+            if (!hasActivePlan)
+            {
+                client.SubscriptionStartDate = DateTime.Now;
+                client.SubscriptionEndDate = DateTime.Now.AddMonths(1);
+            }
 
             await _userRepo.Update(client);
             await _userRepo.Save();

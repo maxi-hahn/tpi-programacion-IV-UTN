@@ -1,4 +1,4 @@
-﻿using Application.Dtos.Request;
+using Application.Dtos.Request;
 using Application.Dtos.Responses;
 using Application.Interfaces;
 using Domain.Entity;
@@ -78,18 +78,49 @@ namespace Infrastructure.Service
             var accessToken = _configuration["MercadoPago:AccessToken"];
             var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
 
+            // --- Objective 3: Calculate prorated price if client has an active plan ---
+            float priceToCharge = plan.Value;
+
+            var currentPlanStatus = await _clientService.GetUserPlan(userId);
+            var hasActivePlan = currentPlanStatus.IsActive &&
+                                currentPlanStatus.SubscriptionEndDate.HasValue &&
+                                currentPlanStatus.SubscriptionEndDate.Value > DateTime.Now &&
+                                currentPlanStatus.PlanValue.HasValue;
+
+            if (hasActivePlan)
+            {
+                var remainingDays = (currentPlanStatus.SubscriptionEndDate!.Value.Date - DateTime.Now.Date).Days;
+
+                if (remainingDays > 0)
+                {
+                    var currentProrated = (currentPlanStatus.PlanValue!.Value / 30f) * remainingDays;
+                    var newProrated = (plan.Value / 30f) * remainingDays;
+                    var difference = newProrated - currentProrated;
+
+                    if (difference <= 0)
+                    {
+                        // New plan is cheaper or equal: activate immediately, no payment needed
+                        await _clientService.UpdatePlan(plan.Id, userId);
+                        return $"{frontendBaseUrl}/payment/success";
+                    }
+
+                    priceToCharge = difference;
+                }
+            }
+            // -------------------------------------------------------------------------
+
             var requestBody = new
             {
                 items = new[]
                 {
-            new
-            {
-                title = plan.Name,
-                quantity = 1,
-                currency_id = "ARS",
-                unit_price = plan.Value,
-            }
-        },
+                    new
+                    {
+                        title = plan.Name,
+                        quantity = 1,
+                        currency_id = "ARS",
+                        unit_price = priceToCharge,
+                    }
+                },
                 notification_url = _configuration["MercadoPago:NotificationUrl"],
                 external_reference = $"{plan.Id}|{userId}",
                 back_urls = new

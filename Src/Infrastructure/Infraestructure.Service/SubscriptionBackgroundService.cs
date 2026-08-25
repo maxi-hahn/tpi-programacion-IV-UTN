@@ -1,4 +1,4 @@
-﻿using Application.Interfaces;
+using Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 namespace Infrastructure.Service
@@ -20,6 +20,7 @@ namespace Infrastructure.Service
 
                 var subscriptionService = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
 
+                await subscriptionService.AutoUnsubscribePastClasses();
                 await subscriptionService.CheckExpiredSubscriptions();
 
                 await Task.Delay(TimeSpan.FromHours(24),stoppingToken);

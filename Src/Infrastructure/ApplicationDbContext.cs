@@ -1,4 +1,4 @@
-﻿using Domain.Entity;
+using Domain.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure
@@ -13,6 +13,7 @@ namespace Infrastructure
         public DbSet<Client> Clients { get; set; }
         public DbSet<Admin> Admins { get; set; }
         public DbSet<SysAdmin> SysAdmins { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -41,6 +42,12 @@ namespace Infrastructure
                 .WithMany(s => s.Inscriptions)
                 .HasForeignKey(i => i.ScheduleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
         }
