@@ -45,32 +45,31 @@ namespace Infrastructure.Service
 
                 if (parts.Length != 2)
                 {
-                    Console.WriteLine($"Formato de external_reference inválido: {payment.ExternalReference}");
+                  
                     return;
                 }
 
                 if (!Guid.TryParse(parts[0], out var planId) || !Guid.TryParse(parts[1], out var userId))
                 {
-                    Console.WriteLine($"GUIDs inválidos en external_reference: {payment.ExternalReference}");
+         
                     return;
                 }
 
-                Console.WriteLine($">>> Pago aprobado! PlanId: {planId} - UserId: {userId}");
-
+              
                 try
                 {
                     await _clientService.UpdatePlan(planId, userId);
-                    Console.WriteLine($">>> Plan activado correctamente para usuario {userId}");
+                    
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error activando plan para usuario {userId}: {ex.Message}");
+                    
                     throw; // Re-lanzar para que el webhook maneje el error
                 }
             }
             else
             {
-                Console.WriteLine($">>> Status del pago: {payment.Status}");
+               
             }
         }
         public async Task<string> CreatePreference(Plan plan, Guid userId)
@@ -133,7 +132,6 @@ namespace Infrastructure.Service
             };
 
             var json = JsonSerializer.Serialize(requestBody);
-            Console.WriteLine($"JSON enviado: {json}");
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -144,9 +142,7 @@ namespace Infrastructure.Service
             var response = await _httpClient.SendAsync(request);
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Status: {response.StatusCode}");
-            Console.WriteLine($"Response: {responseContent}");
-
+          
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"Error {response.StatusCode}: {responseContent}");

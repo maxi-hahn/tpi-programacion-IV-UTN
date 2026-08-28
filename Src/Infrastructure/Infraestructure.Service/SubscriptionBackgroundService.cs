@@ -16,14 +16,20 @@ namespace Infrastructure.Service
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                using var scope = _serviceProvider.CreateScope();
+                // Run immediately at startup, then again at every midnight
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var subscriptionService = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
+                    await subscriptionService.AutoUnsubscribePastClasses();
+                    await subscriptionService.CheckExpiredSubscriptions();
+                }
 
-                var subscriptionService = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
+                // Calculate exact time remaining until next midnight (00:00)
+                var now = DateTime.Now;
+                var nextMidnight = now.Date.AddDays(1);
+                var timeUntilMidnight = nextMidnight - now;
 
-                await subscriptionService.AutoUnsubscribePastClasses();
-                await subscriptionService.CheckExpiredSubscriptions();
-
-                await Task.Delay(TimeSpan.FromHours(24),stoppingToken);
+                await Task.Delay(timeUntilMidnight, stoppingToken);
             }
         }
     }

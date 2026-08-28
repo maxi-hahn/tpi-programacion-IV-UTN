@@ -38,11 +38,10 @@ namespace Presentation.Presentation.Controller
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error en ClassController.Get: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+               
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                    
                 }
                 return StatusCode(500, new { error = ex.Message });
             }

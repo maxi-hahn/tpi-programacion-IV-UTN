@@ -183,8 +183,8 @@ namespace Application.Services
 
             if (!plan.IsUnlimited)
             {
-                var periodStart = client.SubscriptionStartDate ?? DateTime.UtcNow.AddMonths(-1);
-                var periodEnd = client.SubscriptionEndDate ?? DateTime.UtcNow;
+                var periodStart = client.SubscriptionStartDate ?? DateTime.Now.AddMonths(-1);
+                var periodEnd = client.SubscriptionEndDate ?? DateTime.Now;
 
                 var classesUsedInPeriod = activeInscriptions.Count(i =>
                     i.IsConsumed &&  // Cambio: contar consumidas, no activas
@@ -216,7 +216,7 @@ namespace Application.Services
                 UserId = userId,
                 ClassId = gymClass.Id,
                 ScheduleId = request.ScheduleId,
-                InscriptionDate = DateTime.UtcNow,
+                InscriptionDate = DateTime.Now,
                 ClassDate = classDate, // DateTime normal, se guarda bien en BD
                 IsActive = true,
                 IsConsumed = true  
@@ -264,7 +264,7 @@ namespace Application.Services
             }
 
             // Calcular tiempo desde la inscripción
-            var timeSinceEnrollment = DateTime.UtcNow - inscription.InscriptionDate;
+            var timeSinceEnrollment = DateTime.Now - inscription.InscriptionDate;
             // Calcular días de anticipación
             var daysUntilClass = (inscription.ClassDate.Date - DateTime.Now.Date).Days;
 
@@ -308,8 +308,27 @@ namespace Application.Services
         {
             var inscriptions = await _inscriptionRepo.GetByUserIdWithClass(userId);
 
-            // Devolver TODAS las inscripciones (pasadas y futuras)
-            // El frontend decidirá cómo mostrarlas
+            // Lazy cleanup: deactivate past inscriptions for this user
+            var pastInscriptions = inscriptions
+                .Where(i => i.IsActive && i.ClassDate < DateTime.Now)
+                .ToList();
+
+            foreach (var inscription in pastInscriptions)
+            {
+                inscription.IsActive = false;
+                // IsConsumed stays true — no credit returned
+                await _inscriptionRepo.Update(inscription);
+
+                await _notificationService.CreateNotification(
+                    inscription.UserId,
+                    "Clase completada",
+                    $"Tu clase de {inscription.Class?.Name ?? "la clase"} ha finalizado. ¡Reservá la próxima!",
+                    "ClassCompleted");
+            }
+
+            if (pastInscriptions.Any())
+                await _inscriptionRepo.Save();
+
             return inscriptions.Select(i => i.ToMyInscriptionResponse());
         }
 
@@ -339,7 +358,7 @@ namespace Application.Services
             }
 
             // El admin puede cancelar en cualquier momento
-            var timeSinceEnrollment = DateTime.UtcNow - inscription.InscriptionDate;
+            var timeSinceEnrollment = DateTime.Now - inscription.InscriptionDate;
             var daysUntilClass = (inscription.ClassDate.Date - DateTime.Now.Date).Days;
 
             inscription.IsActive = false;

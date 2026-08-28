@@ -46,10 +46,8 @@ namespace Presentation.Presentation.Controller
                 await _mercadoPagoService.ProcessPayment(id);
                 return Ok();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Log del error pero devolver 200 para que Mercado Pago no reintente
-                Console.WriteLine($"Error procesando webhook: {ex.Message}");
                 return Ok();
             }
         }

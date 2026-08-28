@@ -91,9 +91,6 @@ namespace Application.Mapper
 
             var result = nextDate.Add(startTime.ToTimeSpan());
 
-            // Log para debug
-            Console.WriteLine($"Day enum: {dayOfWeek}, Target DayOfWeek: {targetDayOfWeek}, Current: {currentDay}, Days diff: {daysUntilTarget}, Next date: {result}");
-
             return result;
         }
     }

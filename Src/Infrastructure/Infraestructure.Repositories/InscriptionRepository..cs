@@ -25,7 +25,7 @@ namespace Infrastructure.Repositories
                 .Include(i => i.Schedule)
                 .Where(i => i.UserId == userId &&
                             i.IsActive &&
-                            i.ClassDate >= DateTime.UtcNow)  // Solo futuras
+                            i.ClassDate >= DateTime.Now)  // Solo futuras
                 .ToListAsync();
         }
 
