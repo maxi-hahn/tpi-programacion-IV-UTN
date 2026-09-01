@@ -107,23 +107,19 @@ namespace Application.Services
             if (schedule == null)
                 throw new NotFoundException("Schedule not found");
 
-            // Verificar solo inscripciones activas
             var hasActiveInscriptions = await _inscriptionRepo.ExistsByScheduleId(id);
 
             if (hasActiveInscriptions)
                 throw new ConflictException(
                     "No se puede eliminar un horario con inscripciones activas.");
 
-            // Obtener TODAS las inscripciones (incluyendo inactivas)
-            var allInscriptions = await _inscriptionRepo.GetByScheduleId(id);
+            // Soft delete: desactivar en lugar de eliminar
+            schedule.IsActive = false;
 
-            // Eliminar inscripciones inactivas
-            foreach (var inscription in allInscriptions.Where(i => !i.IsActive))
-            {
-                await _inscriptionRepo.Delete(inscription);
-            }
+            await _repository.Update(id, schedule);
+            await _repository.Save();
 
-            return await _repository.Delete(id);
+            return true;
         }
     }
 }

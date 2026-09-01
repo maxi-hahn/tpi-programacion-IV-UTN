@@ -77,7 +77,6 @@ namespace Infrastructure.Service
             var accessToken = _configuration["MercadoPago:AccessToken"];
             var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
 
-            // --- Objective 3: Calculate prorated price if client has an active plan ---
             float priceToCharge = plan.Value;
 
             var currentPlanStatus = await _clientService.GetUserPlan(userId);
@@ -88,38 +87,28 @@ namespace Infrastructure.Service
 
             if (hasActivePlan)
             {
-                var remainingDays = (currentPlanStatus.SubscriptionEndDate!.Value.Date - DateTime.Now.Date).Days;
-
-                if (remainingDays > 0)
+                // Eliminar downgrade: si el plan nuevo es más barato, rechazar
+                if (plan.Value <= currentPlanStatus.PlanValue!.Value)
                 {
-                    var currentProrated = (currentPlanStatus.PlanValue!.Value / 30f) * remainingDays;
-                    var newProrated = (plan.Value / 30f) * remainingDays;
-                    var difference = newProrated - currentProrated;
-
-                    if (difference <= 0)
-                    {
-                        // New plan is cheaper or equal: activate immediately, no payment needed
-                        await _clientService.UpdatePlan(plan.Id, userId);
-                        return $"{frontendBaseUrl}/payment/success";
-                    }
-
-                    priceToCharge = difference;
+                    throw new InvalidOperationException("No se puede cambiar a un plan más barato o igual.");
                 }
+
+                // Cobrar diferencia EXACTA, sin prorrateo
+                priceToCharge = plan.Value - currentPlanStatus.PlanValue!.Value;
             }
-            // -------------------------------------------------------------------------
 
             var requestBody = new
             {
                 items = new[]
                 {
-                    new
-                    {
-                        title = plan.Name,
-                        quantity = 1,
-                        currency_id = "ARS",
-                        unit_price = priceToCharge,
-                    }
-                },
+            new
+            {
+                title = plan.Name,
+                quantity = 1,
+                currency_id = "ARS",
+                unit_price = priceToCharge,
+            }
+        },
                 notification_url = _configuration["MercadoPago:NotificationUrl"],
                 external_reference = $"{plan.Id}|{userId}",
                 back_urls = new
@@ -128,8 +117,8 @@ namespace Infrastructure.Service
                     failure = $"{frontendBaseUrl}/payment/failure",
                     pending = $"{frontendBaseUrl}/payment/pending"
                 }
-                // Sin auto_return
             };
+
 
             var json = JsonSerializer.Serialize(requestBody);
 

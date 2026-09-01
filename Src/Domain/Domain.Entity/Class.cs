@@ -11,7 +11,7 @@
         public List<Schedule> Schedules { get; set; } = new();
 
         public List<Inscription> Inscriptions { get; set; } = new();
-
+        public bool IsDeleted { get; set; } = false;  // NUEVO
         public Class() { }
     }
 }

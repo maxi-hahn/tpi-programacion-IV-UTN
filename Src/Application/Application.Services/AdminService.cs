@@ -142,13 +142,19 @@ namespace Application.Services
             var gymClass = await _repo.GetById(id);
             if (gymClass == null)
                 throw new NotFoundException("Class not found");
-            var classHasInscriptions = await _inscriptionRepo.ExistsByClassId(id);
 
-            if (classHasInscriptions)
+            var hasActiveInscriptions = await _inscriptionRepo.ExistsByClassId(id);
+
+            if (hasActiveInscriptions)
             {
                 throw new ConflictException("Cannot delete a class with active inscriptions");
             }
-            await _repo.Delete(gymClass);
+
+            // Soft delete permanente
+            gymClass.IsDeleted = true;
+            gymClass.IsActive = false;
+
+            await _repo.Update(gymClass);
             await _repo.Save();
             return await _repo.GetAll();
         }
@@ -245,7 +251,18 @@ namespace Application.Services
             var schedule = await _scheduleRepo.GetById(id);
             if (schedule == null)
                 throw new NotFoundException("Schedule not found");
-            await _scheduleRepo.Delete(id);
+
+            var hasActiveInscriptions = await _inscriptionRepo.ExistsByScheduleId(id);
+
+            if (hasActiveInscriptions)
+            {
+                throw new ConflictException("Cannot delete a schedule with active inscriptions");
+            }
+
+            // Soft delete
+            schedule.IsActive = false;
+
+            await _scheduleRepo.Update(id, schedule);
             await _scheduleRepo.Save();
             return schedule;
         }

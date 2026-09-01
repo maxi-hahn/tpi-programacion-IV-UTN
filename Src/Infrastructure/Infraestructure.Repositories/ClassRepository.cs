@@ -16,15 +16,15 @@ namespace Infrastructure.Repositories
             return await _context.Classes
                 .Include(c => c.Schedules)
                     .ThenInclude(s => s.Inscriptions)
+                .Where(c => !c.IsDeleted)  
                 .ToListAsync();
         }
-
         public override async Task<Class?> GetById(Guid id)
         {
             return await _context.Classes
                 .Include(c => c.Schedules)
                     .ThenInclude(s => s.Inscriptions)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);  // ← Filtrar eliminadas
         }
     }
 }

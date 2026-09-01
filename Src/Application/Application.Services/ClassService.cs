@@ -23,9 +23,8 @@ namespace Application.Services
         public async Task<Class?> GetById(Guid id)
         {
             var gymClass = await _repo.GetById(id);
-            if (gymClass == null)
+            if (gymClass == null || gymClass.IsDeleted)
                 throw new NotFoundException($"Class with ID {id} not found.");
-          
             return gymClass;
         }
 
@@ -103,13 +102,16 @@ namespace Application.Services
             if (gymClass == null)
                 throw new NotFoundException($"Class with ID {id} not found.");
 
-            var hasInscriptions =
-                await _inscriptionRepo.ExistsByClassId(id);
+            var hasInscriptions = await _inscriptionRepo.ExistsByClassId(id);
 
             if (hasInscriptions)
                 throw new ConflictException("Cannot delete a class with registered users.");
 
-            await _repo.Delete(gymClass);
+            // Soft delete en lugar de eliminar físicamente
+            gymClass.IsDeleted = true;
+            gymClass.IsActive = false;
+
+            await _repo.Update(gymClass);
             await _repo.Save();
 
             return true;
