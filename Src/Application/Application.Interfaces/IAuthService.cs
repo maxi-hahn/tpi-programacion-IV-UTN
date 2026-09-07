@@ -1,4 +1,4 @@
-﻿using Application.Dtos.Responses;
+using Application.Dtos.Responses;
 using Application.Dtos.Request;
 namespace Application.Interfaces
 {
@@ -10,7 +10,7 @@ namespace Application.Interfaces
         Task<AuthResponse?> SingUp(SingUpRequest request);
 
         Task<bool> VerifyEmail(string token);
-        Task<bool> ResendVerificationEmail(string email);
+        Task<bool> ResendVerificationEmail(string? email = null);
 
         Task<bool> ForgotPassword(string email);
 

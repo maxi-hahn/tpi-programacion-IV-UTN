@@ -1,4 +1,4 @@
-﻿using Application.Constants;
+using Application.Constants;
 using Application.Dtos.Request;
 using Application.Dtos.Responses;
 using Application.Exceptions;
@@ -26,21 +26,22 @@ namespace Infrastructure.Service
         private readonly IConfiguration _configuration;
         private readonly IPasswordHasherService _hasher;
         private readonly IEmailService _emailService;
+        private readonly IUserContext _userContext;
 
-        public AuthService(ApplicationDbContext context, IConfiguration configuration, IPasswordHasherService hasher, IEmailService emailService)
+        public AuthService(ApplicationDbContext context, IConfiguration configuration, IPasswordHasherService hasher, IEmailService emailService, IUserContext userContext)
         {
             _context = context;
             _configuration = configuration;
             _hasher = hasher;
             _emailService = emailService;
+            _userContext = userContext;
         }
 
         //Agregar validaciones de registro
 
         public async Task<AuthResponse?> SingUp(SingUpRequest request)
         {
-            var baseUrl = _configuration["AppSettings:BaseUrl"];
-
+            var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
 
             string patron = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             if (!Regex.IsMatch(request.Email, patron))
@@ -58,13 +59,12 @@ namespace Infrastructure.Service
             if (existingUser != null)
             {
                 throw new ConflictException(
-                 "Invalid email format");
+                 "Email already in use");
             }
 
             var hashedPassword = _hasher.Hash(request.Password);
             var verificationToken = Guid.NewGuid().ToString();
-            var verificationExpiration = DateTime.UtcNow.AddHours(24);
-
+            var verificationExpiration = DateTime.Now.AddHours(24);
 
             var newUser = new Client
             {
@@ -80,9 +80,7 @@ namespace Infrastructure.Service
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            //MOdificar el link para que apunte a la ruta correcta en el frontend
-
-            var verificationLink = $"{baseUrl}/api/clients/verify-email?token={verificationToken}";
+            var verificationLink = $"{frontendBaseUrl}/verify-email?token={verificationToken}";
             await _emailService.SendEmailAsync(
                  newUser.Email,
                  EmailSubjects.VerifyEmail,
@@ -166,7 +164,7 @@ namespace Infrastructure.Service
             if (user == null)
                 throw new NotFoundException("Invalid verification token");
             if (user.VerificationTokenExpiration == null ||
-                user.VerificationTokenExpiration < DateTime.UtcNow)
+                user.VerificationTokenExpiration < DateTime.Now)
             {
                 throw new UnauthorizedException("Verification token expired");
             }
@@ -178,12 +176,17 @@ namespace Infrastructure.Service
             return true;
         }
 
-        public async Task<bool> ResendVerificationEmail(string email)
+        public async Task<bool> ResendVerificationEmail(string? email = null)
         {
-            var baseUrl = _configuration["AppSettings:BaseUrl"];
+            var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
+
+            var targetEmail = string.IsNullOrWhiteSpace(email) ? _userContext.Email : email;
+
+            if (string.IsNullOrWhiteSpace(targetEmail))
+                throw new BadRequestException("Email is required");
 
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
+                .FirstOrDefaultAsync(u => u.Email == targetEmail);
 
             if (user == null)
                 throw new NotFoundException("Email not found");
@@ -194,12 +197,11 @@ namespace Infrastructure.Service
             var verificationToken = Guid.NewGuid().ToString();
 
             user.VerificationToken = verificationToken;
-            user.VerificationTokenExpiration = DateTime.UtcNow.AddHours(24);
+            user.VerificationTokenExpiration = DateTime.Now.AddHours(24);
 
             await _context.SaveChangesAsync();
 
-            var verificationLink = $"{baseUrl}/api/clients/verify-email?token={verificationToken}";
-
+            var verificationLink = $"{frontendBaseUrl}/verify-email?token={verificationToken}";
 
             await _emailService.SendEmailAsync(
                 user.Email,

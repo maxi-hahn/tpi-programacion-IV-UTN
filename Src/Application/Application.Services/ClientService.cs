@@ -70,6 +70,9 @@ namespace Application.Services
             if (client == null)
                 throw new NotFoundException("Client not found");
 
+            if (!client.EmailVerified)
+                throw new ForbiddenException("El cliente debe verificar su email antes de adquirir un plan.");
+
             var plan = await _planRepo.GetById(request.PlanId);
 
             if (plan == null)

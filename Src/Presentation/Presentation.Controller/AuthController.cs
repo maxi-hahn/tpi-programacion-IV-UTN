@@ -1,4 +1,4 @@
-﻿using Application.Dtos.Request;
+using Application.Dtos.Request;
 using Application.Dtos.Responses;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +27,7 @@ namespace Presentation.Presentation.Controller
 
         [AllowAnonymous]
         [HttpPost("signup")]
-        public async Task<ActionResult<SingUpResponse>> SingUp([FromBody] SingUpRequest request)
+        public async Task<ActionResult<AuthResponse>> SingUp([FromBody] SingUpRequest request)
         {
             var response = await _authService.SingUp(request);
             return Ok(response);
@@ -38,15 +38,15 @@ namespace Presentation.Presentation.Controller
         public async Task<IActionResult> VerifyEmail([FromQuery] string token)
         {
             await _authService.VerifyEmail(token);
-            return Ok("Email verificado correctamente.");
+            return Ok(new { message = "Email verificado correctamente." });
         }
 
-        [AllowAnonymous]
+        [Authorize]
         [HttpPost("resend-verification")]
-        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest request)
+        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest? request)
         {
-            await _authService.ResendVerificationEmail(request.Email);
-            return Ok("Correo de verificacion enviado.");
+            await _authService.ResendVerificationEmail(request?.Email);
+            return Ok(new { message = "Correo de verificacion enviado." });
         }
 
         [AllowAnonymous]

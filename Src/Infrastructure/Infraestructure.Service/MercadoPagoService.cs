@@ -7,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Application.Exceptions;
+
 namespace Infrastructure.Service
 {
     public class MercadoPagoService : IMercadoPagoService
@@ -14,15 +16,18 @@ namespace Infrastructure.Service
         private readonly IClientService _clientService;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly IUserRepository _userRepo;
 
         public MercadoPagoService(
             IClientService clientService,
             HttpClient httpClient,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IUserRepository userRepo)
         {
             _clientService = clientService;
             _httpClient = httpClient;
             _configuration = configuration;
+            _userRepo = userRepo;
         }
 
         public async Task ProcessPayment(string paymentId)
@@ -74,6 +79,13 @@ namespace Infrastructure.Service
         }
         public async Task<string> CreatePreference(Plan plan, Guid userId)
         {
+            var user = await _userRepo.GetById(userId);
+            if (user == null)
+                throw new NotFoundException("Client not found");
+
+            if (!user.EmailVerified)
+                throw new ForbiddenException("Debes verificar tu email antes de adquirir un plan.");
+
             var accessToken = _configuration["MercadoPago:AccessToken"];
             var frontendBaseUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:5173";
 
