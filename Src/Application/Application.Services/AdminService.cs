@@ -19,7 +19,8 @@ namespace Application.Services
         private readonly IScheduleRepository _scheduleRepo;
         private readonly IUserRepository _userRepo;
         private readonly IInscriptionRepository _inscriptionRepo;
-        public AdminService(IUserRepository repo, IPasswordHasherService hasher, IUserContext userContext, IClassRepository classRepo, IScheduleRepository scheduleRepo, IPlanRepository planRepo, IUserRepository userRepo, IInscriptionRepository inscriptionRepo)
+        private readonly INotificationService _notificationService;
+        public AdminService(IUserRepository repo, IPasswordHasherService hasher, IUserContext userContext, IClassRepository classRepo, IScheduleRepository scheduleRepo, IPlanRepository planRepo, IUserRepository userRepo, IInscriptionRepository inscriptionRepo, INotificationService notificationService)
             : base(repo, hasher, userContext)
         {
             _repo = classRepo;
@@ -27,6 +28,7 @@ namespace Application.Services
             _planRepo = planRepo;
             _userRepo = userRepo;
             _inscriptionRepo = inscriptionRepo;
+            _notificationService = notificationService;
         }
 
 
@@ -189,6 +191,19 @@ namespace Application.Services
 
             await _repo.Add(clase);
             await _repo.Save();
+
+            var allUsers = await _userRepo.GetAll();
+            var clients = allUsers.OfType<Client>();
+
+            foreach (var client in clients)
+            {
+                await _notificationService.CreateNotification(
+                    client.Id,
+                    "Nueva clase disponible",
+                    $"Se agregó la clase \"{clase.Name}\". ¡Anotate!",
+                    "NewClass"
+                );
+            }
 
             return clase;
         }
