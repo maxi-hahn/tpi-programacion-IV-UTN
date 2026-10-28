@@ -248,7 +248,7 @@ namespace Application.Services
 
             foreach (var scheduleRequest in scheduleRequests)
             {
-                var schedule = await CreteSchedule(scheduleRequest); 
+                var schedule = await CreteSchedule(scheduleRequest);
                 schedules.Add(schedule);
             }
 
@@ -421,4 +421,3 @@ namespace Application.Services
         }
     }
 }
-    
