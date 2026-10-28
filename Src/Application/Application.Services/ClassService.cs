@@ -1,5 +1,6 @@
 using Application.Exceptions;
 using Application.Interfaces;
+using System.Text.Json;
 using Domain.Entity;
 using Domain.Interface;
 
@@ -9,10 +10,30 @@ namespace Application.Services
     {
         private readonly IClassRepository _repo;
         private readonly IInscriptionRepository _inscriptionRepo;
-        public ClassService(IClassRepository repo, IInscriptionRepository inscriptionRepo)
+        private readonly IUserRepository _userRepo;
+        private readonly INotificationService _notificationService;
+
+        public ClassService(
+            IClassRepository repo,
+            IInscriptionRepository inscriptionRepo,
+            IUserRepository userRepo,
+            INotificationService notificationService)
         {
             _repo = repo;
             _inscriptionRepo = inscriptionRepo;
+            _userRepo = userRepo;
+            _notificationService = notificationService;
+        }
+
+        private async Task NotifyAllClients(string title, string message, string type, string? data = null)
+        {
+            var users = await _userRepo.GetAll();
+            var clients = users.OfType<Client>();
+
+            foreach (var client in clients)
+            {
+                await _notificationService.CreateNotification(client.Id, title, message, type, data);
+            }
         }
 
         public async Task<IEnumerable<Class>> GetAll()
@@ -47,6 +68,14 @@ namespace Application.Services
             gymClass.Id = Guid.NewGuid();
             await _repo.Add(gymClass);
             await _repo.Save();
+
+            var jsonData = JsonSerializer.Serialize(new { className = gymClass.Name });
+
+            await NotifyAllClients(
+                "Nueva clase disponible",
+                "Se agregó una nueva clase.",
+                "NewClass",
+                jsonData);
 
             return gymClass;
         }
@@ -93,6 +122,30 @@ namespace Application.Services
             await _repo.Update(gymClass);
             await _repo.Save();
 
+            var jsonData = JsonSerializer.Serialize(new
+            {
+                className = gymClass.Name,
+                isActive = isActive,
+                action = isActive ? "enabled" : "disabled"
+            });
+
+            if (!isActive)
+            {
+                await NotifyAllClients(
+                    "Clase deshabilitada",
+                    "La clase ha sido deshabilitada.",
+                    "ClassDisabled",
+                    jsonData);
+            }
+            else
+            {
+                await NotifyAllClients(
+                    "Clase habilitada",
+                    "La clase ha sido habilitada.",
+                    "ClassEnabled",
+                    jsonData);
+            }
+
             return true;
         }
         public async Task<bool> Delete(Guid id)
@@ -113,6 +166,14 @@ namespace Application.Services
 
             await _repo.Update(gymClass);
             await _repo.Save();
+
+            var jsonData = JsonSerializer.Serialize(new { className = gymClass.Name });
+
+            await NotifyAllClients(
+                "Clase eliminada",
+                "La clase ha sido eliminada.",
+                "ClassDeleted",
+                jsonData);
 
             return true;
         }

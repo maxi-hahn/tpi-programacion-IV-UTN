@@ -1,4 +1,4 @@
-﻿using Application.Dtos.Responses;
+using Application.Dtos.Responses;
 using Application.Exceptions;
 using Application.Interfaces;
 using Domain.Entity;
@@ -15,7 +15,7 @@ namespace Application.Services
             _notificationRepo = notificationRepo;
         }
 
-        public async Task CreateNotification(Guid userId, string title, string message, string type)
+        public async Task CreateNotification(Guid userId, string title, string message, string type, string? data = null)
         {
             var notification = new Notification
             {
@@ -24,6 +24,7 @@ namespace Application.Services
                 Title = title,
                 Message = message,
                 Type = type,
+                Data = data,
                 CreatedAt = DateTime.Now,
                 IsRead = false
             };
@@ -42,6 +43,7 @@ namespace Application.Services
                 Title = n.Title,
                 Message = n.Message,
                 Type = n.Type,
+                Data = n.Data,
                 CreatedAt = n.CreatedAt,
                 IsRead = n.IsRead
             });

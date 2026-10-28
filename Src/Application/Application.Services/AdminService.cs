@@ -1,5 +1,6 @@
 using Application.Dtos.Request;
 using Application.Dtos.Request.Admin;
+using System.Text.Json;
 using Application.Dtos.Responses;
 using Application.Exceptions;
 using Application.Interfaces;
@@ -19,7 +20,18 @@ namespace Application.Services
         private readonly IScheduleRepository _scheduleRepo;
         private readonly IUserRepository _userRepo;
         private readonly IInscriptionRepository _inscriptionRepo;
-        public AdminService(IUserRepository repo, IPasswordHasherService hasher, IUserContext userContext, IClassRepository classRepo, IScheduleRepository scheduleRepo, IPlanRepository planRepo, IUserRepository userRepo, IInscriptionRepository inscriptionRepo)
+        private readonly INotificationService _notificationService;
+
+        public AdminService(
+            IUserRepository repo,
+            IPasswordHasherService hasher,
+            IUserContext userContext,
+            IClassRepository classRepo,
+            IScheduleRepository scheduleRepo,
+            IPlanRepository planRepo,
+            IUserRepository userRepo,
+            IInscriptionRepository inscriptionRepo,
+            INotificationService notificationService)
             : base(repo, hasher, userContext)
         {
             _repo = classRepo;
@@ -27,6 +39,18 @@ namespace Application.Services
             _planRepo = planRepo;
             _userRepo = userRepo;
             _inscriptionRepo = inscriptionRepo;
+            _notificationService = notificationService;
+        }
+
+        private async Task NotifyAllClients(string title, string message, string type, string? data = null)
+        {
+            var users = await _userRepo.GetAll();
+            var clients = users.OfType<Client>();
+
+            foreach (var client in clients)
+            {
+                await _notificationService.CreateNotification(client.Id, title, message, type, data);
+            }
         }
 
 
@@ -55,6 +79,19 @@ namespace Application.Services
 
             await _planRepo.Update(plan_id);
             await _planRepo.Save();
+
+            var jsonData = JsonSerializer.Serialize(new
+            {
+                planName = plan_id.Name,
+                planValue = plan_id.Value,
+                action = "updated"
+            });
+
+            await NotifyAllClients(
+                "Planes actualizados",
+                "Los planes del gimnasio han sido actualizados. ¡Revisalos!",
+                "PlanChanged",
+                jsonData);
 
             return plan_id;
         }
@@ -85,6 +122,19 @@ namespace Application.Services
             await _planRepo.Add(plan);
             await _planRepo.Save();
 
+            var jsonData = JsonSerializer.Serialize(new
+            {
+                planName = plan.Name,
+                planValue = plan.Value,
+                action = "created"
+            });
+
+            await NotifyAllClients(
+                "Planes actualizados",
+                "Los planes del gimnasio han sido actualizados. ¡Revisalos!",
+                "PlanChanged",
+                jsonData);
+
             return plan;
         }
 
@@ -102,6 +152,19 @@ namespace Application.Services
 
             await _planRepo.Delete(plan);
             await _planRepo.Save();
+
+            var jsonData = JsonSerializer.Serialize(new
+            {
+                planName = plan.Name,
+                action = "deleted"
+            });
+
+            await NotifyAllClients(
+                "Planes actualizados",
+                "Los planes del gimnasio han sido actualizados. ¡Revisalos!",
+                "PlanChanged",
+                jsonData);
+
             return plan;
         }
 
@@ -156,6 +219,15 @@ namespace Application.Services
 
             await _repo.Update(gymClass);
             await _repo.Save();
+
+            var jsonData = JsonSerializer.Serialize(new { className = gymClass.Name });
+
+            await NotifyAllClients(
+                "Clase eliminada",
+                "La clase ha sido eliminada.",
+                "ClassDeleted",
+                jsonData);
+
             return await _repo.GetAll();
         }
 
@@ -189,6 +261,14 @@ namespace Application.Services
 
             await _repo.Add(clase);
             await _repo.Save();
+
+            var jsonData = JsonSerializer.Serialize(new { className = clase.Name });
+
+            await NotifyAllClients(
+                "Nueva clase disponible",
+                "Se agregó una nueva clase.",
+                "NewClass",
+                jsonData);
 
             return clase;
         }
@@ -259,11 +339,30 @@ namespace Application.Services
                 throw new ConflictException("Cannot delete a schedule with active inscriptions");
             }
 
+            var gymClass = await _repo.GetById(schedule.Id_Class);
+            var className = gymClass?.Name ?? "la clase";
+
             // Soft delete
             schedule.IsActive = false;
 
             await _scheduleRepo.Update(id, schedule);
             await _scheduleRepo.Save();
+
+            var jsonData = JsonSerializer.Serialize(new
+            {
+                className = className,
+                day = schedule.DayOfWeek.ToString(),
+                startTime = schedule.StartTime.ToString("HH:mm"),
+                endTime = schedule.EndTime.ToString("HH:mm"),
+                action = "deleted"
+            });
+
+            await NotifyAllClients(
+                "Horario eliminado",
+                "El horario ha sido eliminado.",
+                "ScheduleDeleted",
+                jsonData);
+
             return schedule;
         }
 

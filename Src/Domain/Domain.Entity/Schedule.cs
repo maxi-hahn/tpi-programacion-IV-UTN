@@ -18,6 +18,7 @@ namespace Domain.Entity
 
         [ForeignKey("Class")]
         public Guid Id_Class { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         public bool IsActive { get; set; } = true;
         [JsonIgnore]

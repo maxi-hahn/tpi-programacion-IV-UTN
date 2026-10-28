@@ -37,7 +37,11 @@ namespace Application.Services
 
             foreach (var client in activeClients)
             {
+                // daysLeft is still used for the "3 days left" warning email (day granularity is fine there)
                 var daysLeft = (client.SubscriptionEndDate!.Value.Date - DateTime.Now.Date).Days;
+
+                // Fix: use full DateTime comparison so expiry fires the same hour, not the next calendar day
+                var isExpired = client.SubscriptionEndDate!.Value < DateTime.Now;
 
                 // Caso 1: Aviso 3 días antes del vencimiento
                 if (daysLeft == 3)
@@ -56,8 +60,8 @@ namespace Application.Services
                         $"Tu plan vence en {daysLeft} días ({client.SubscriptionEndDate.Value:dd/MM/yyyy}). Renovalo para seguir disfrutando.",
                         "PlanExpiring");
                 }
-                // Caso 2: Suscripción vencida
-                else if (daysLeft < 0)
+                // Caso 2: Suscripción vencida (full DateTime — fires same hour, not next day)
+                else if (isExpired)
                 {
                     client.IsActive = false;
 
@@ -102,4 +106,4 @@ namespace Application.Services
             await _inscriptionRepo.Save();
         }
     }
-}
+}

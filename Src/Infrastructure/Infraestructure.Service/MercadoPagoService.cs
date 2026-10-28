@@ -32,6 +32,9 @@ namespace Infrastructure.Service
 
         public async Task ProcessPayment(string paymentId)
         {
+            Console.WriteLine("=== PROCESS PAYMENT DEBUG ===");
+            Console.WriteLine($"Payment ID: {paymentId}");
+
             var accessToken = _configuration["MercadoPago:AccessToken"];
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"v1/payments/{paymentId}");
@@ -44,38 +47,46 @@ namespace Infrastructure.Service
             var payment = JsonSerializer.Deserialize<MercadoPagoPaymentResponse>(result)
                 ?? throw new InvalidOperationException("No se pudo deserializar la respuesta de MercadoPago.");
 
+            Console.WriteLine($"Status: {payment.Status}");
+            Console.WriteLine($"ExternalReference: {payment.ExternalReference}");
+
             if (payment.Status == "approved")
             {
                 var parts = payment.ExternalReference.Split('|');
+                Console.WriteLine($"Parts count: {parts.Length}");
 
+                // Fix Bug 2: do NOT silently return on format errors — throw so the webhook can retry.
                 if (parts.Length != 2)
                 {
-                  
-                    return;
+                    Console.WriteLine($"ERROR: Invalid ExternalReference format: {payment.ExternalReference}");
+                    throw new InvalidOperationException($"Invalid ExternalReference format: {payment.ExternalReference}");
                 }
 
                 if (!Guid.TryParse(parts[0], out var planId) || !Guid.TryParse(parts[1], out var userId))
                 {
-         
-                    return;
+                    Console.WriteLine($"ERROR: Cannot parse GUIDs from ExternalReference: {payment.ExternalReference}");
+                    throw new InvalidOperationException($"Cannot parse GUIDs from ExternalReference: {payment.ExternalReference}");
                 }
 
-              
+                Console.WriteLine($"Parsed PlanId: {planId}, UserId: {userId}");
+
                 try
                 {
                     await _clientService.UpdatePlan(planId, userId);
-                    
+                    Console.WriteLine("UpdatePlan SUCCESS");
                 }
                 catch (Exception ex)
                 {
-                    
+                    Console.WriteLine($"UpdatePlan FAILED: {ex.Message}");
                     throw; // Re-lanzar para que el webhook maneje el error
                 }
             }
             else
             {
-               
+                Console.WriteLine($"Payment not approved — status: {payment.Status}. No plan update performed.");
             }
+
+            Console.WriteLine("=============================");
         }
         public async Task<string> CreatePreference(Plan plan, Guid userId)
         {
@@ -92,10 +103,25 @@ namespace Infrastructure.Service
             float priceToCharge = plan.Value;
 
             var currentPlanStatus = await _clientService.GetUserPlan(userId);
-            var hasActivePlan = currentPlanStatus.IsActive &&
+
+            // Fix Bug 1: hasActivePlan must NOT depend on currentPlanStatus.IsActive (account status).
+            // GetUserPlan now returns IsActive = plan-is-active, but we also guard with PlanId
+            // to be explicit and resilient to future changes in GetPlanStatusForClient.
+            var hasActivePlan = currentPlanStatus.PlanId.HasValue &&
+                                currentPlanStatus.PlanValue.HasValue &&
                                 currentPlanStatus.SubscriptionEndDate.HasValue &&
-                                currentPlanStatus.SubscriptionEndDate.Value > DateTime.Now &&
-                                currentPlanStatus.PlanValue.HasValue;
+                                currentPlanStatus.SubscriptionEndDate.Value > DateTime.Now;
+
+            Console.WriteLine("=== CREATE PREFERENCE DEBUG ===");
+            Console.WriteLine($"User ID: {userId}");
+            Console.WriteLine($"New Plan: {plan.Name} - ${plan.Value}");
+            Console.WriteLine($"Current Plan Status:");
+            Console.WriteLine($"  - IsActive (plan): {currentPlanStatus.IsActive}");
+            Console.WriteLine($"  - PlanId: {currentPlanStatus.PlanId}");
+            Console.WriteLine($"  - PlanName: {currentPlanStatus.PlanName}");
+            Console.WriteLine($"  - PlanValue: {currentPlanStatus.PlanValue}");
+            Console.WriteLine($"  - SubscriptionEndDate: {currentPlanStatus.SubscriptionEndDate}");
+            Console.WriteLine($"  - HasActivePlan: {hasActivePlan}");
 
             if (hasActivePlan)
             {
@@ -108,6 +134,9 @@ namespace Infrastructure.Service
                 // Cobrar diferencia EXACTA, sin prorrateo
                 priceToCharge = plan.Value - currentPlanStatus.PlanValue!.Value;
             }
+
+            Console.WriteLine($"  - PriceToCharge: {priceToCharge}");
+            Console.WriteLine("===============================");
 
             var requestBody = new
             {

@@ -16,12 +16,14 @@ namespace Infrastructure.Repositories
             return await _context.Schedules
                 .Include(s => s.Class)
                 .Include(s => s.Inscriptions)
+                .Where(s => !s.IsDeleted) 
                 .ToListAsync();
         }
         public async Task<IEnumerable<Schedule>> GetByClassId(Guid classId)
         {
             return await _context.Schedules
                 .Where(s => s.Id_Class == classId)
+                .Where(s => !s.IsDeleted)
                 .ToListAsync();
         }
         public async Task<Schedule> Create(Schedule schedule)

@@ -24,12 +24,12 @@ namespace Infrastructure.Service
                     await subscriptionService.CheckExpiredSubscriptions();
                 }
 
-                // Calculate exact time remaining until next midnight (00:00)
-                var now = DateTime.Now;
-                var nextMidnight = now.Date.AddDays(1);
-                var timeUntilMidnight = nextMidnight - now;
-
-                await Task.Delay(timeUntilMidnight, stoppingToken);
+                // TESTING: run every 1 minute so expiration can be verified without waiting.
+                // PRODUCTION: revert to the midnight calculation below:
+                //   var now = DateTime.Now;
+                //   var nextMidnight = now.Date.AddDays(1);
+                //   await Task.Delay(nextMidnight - now, stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
     }

@@ -163,12 +163,18 @@ namespace Application.Services
                     ErrorMessage = "El cliente nunca tuvo un plan."
                 };
 
-            if (!client.IsActive)
+            // Fix: check SubscriptionEndDate directly instead of client.IsActive
+            // (IsActive is account status — it only becomes false after the background
+            //  job runs, so a plan expired mid-day would still allow enrollment until midnight)
+            var isPlanExpired = !client.SubscriptionEndDate.HasValue ||
+                                client.SubscriptionEndDate.Value < DateTime.Now;
+
+            if (isPlanExpired)
                 return new InscriptionResult
                 {
                     Success = false,
                     code = "PLAN_INACTIVE",
-                    ErrorMessage = "El cliente no tiene una suscripción activa."
+                    ErrorMessage = "Tu suscripción ha vencido. Por favor, renueva tu plan."
                 };
 
             var plan = await _planRepo.GetById(client.Id_Plan.Value);

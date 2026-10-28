@@ -14,17 +14,16 @@ namespace Infrastructure.Repositories
         public override async Task<IEnumerable<Class>> GetAll()
         {
             return await _context.Classes
-                .Include(c => c.Schedules)
-                    .ThenInclude(s => s.Inscriptions)
-                .Where(c => !c.IsDeleted)  
+                .Include(c => c.Schedules.Where(s => !s.IsDeleted)) 
+                .Where(c => !c.IsDeleted)
                 .ToListAsync();
         }
         public override async Task<Class?> GetById(Guid id)
         {
             return await _context.Classes
-                .Include(c => c.Schedules)
+                .Include(c => c.Schedules.Where(s => !s.IsDeleted)) // <--- FILTRO AQUÍ
                     .ThenInclude(s => s.Inscriptions)
-                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);  // ← Filtrar eliminadas
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
         }
     }
 }

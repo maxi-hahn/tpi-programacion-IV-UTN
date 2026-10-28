@@ -22,13 +22,28 @@ namespace Application.Services
 
         public async Task UpdatePlan(Guid planId, Guid userId)
         {
+            Console.WriteLine("=== UPDATE PLAN DEBUG ===");
+            Console.WriteLine($"PlanId: {planId}, UserId: {userId}");
+
             var client = (Client)await _userRepo.GetById(userId);
             if (client == null)
+            {
+                Console.WriteLine("ERROR: Client not found");
                 throw new NotFoundException("Client not found");
+            }
 
-            var hasActivePlan = client.IsActive &&
+            Console.WriteLine($"Client found: {client.Name}");
+            Console.WriteLine($"Current Id_Plan: {client.Id_Plan}");
+            Console.WriteLine($"Current IsActive (account): {client.IsActive}");
+            Console.WriteLine($"Current SubscriptionEndDate: {client.SubscriptionEndDate}");
+
+            // Fix Bug 1: hasActivePlan must NOT depend on client.IsActive (account status).
+            // A plan is active when it has a PlanId and the end date is in the future.
+            var hasActivePlan = client.Id_Plan.HasValue &&
                                 client.SubscriptionEndDate.HasValue &&
                                 client.SubscriptionEndDate.Value > DateTime.Now;
+
+            Console.WriteLine($"HasActivePlan: {hasActivePlan}");
 
             client.Id_Plan = planId;
             client.IsActive = true;
@@ -38,10 +53,18 @@ namespace Application.Services
             {
                 client.SubscriptionStartDate = DateTime.Now;
                 client.SubscriptionEndDate = DateTime.Now.AddMonths(1);
+                Console.WriteLine("Set new subscription dates (no prior active plan)");
+            }
+            else
+            {
+                Console.WriteLine($"Keeping existing subscription cycle (ends {client.SubscriptionEndDate})");
             }
 
             await _userRepo.Update(client);
             await _userRepo.Save();
+
+            Console.WriteLine($"New Id_Plan: {client.Id_Plan}");
+            Console.WriteLine("=========================");
         }
 
         public new async Task Update(Guid id, User updatedUser)
@@ -78,7 +101,8 @@ namespace Application.Services
             if (plan == null)
                 throw new NotFoundException("Plan not found");
 
-            var hasActivePlan = client.IsActive &&
+            // Fix Bug 1: use PlanId + SubscriptionEndDate, not account IsActive
+            var hasActivePlan = client.Id_Plan.HasValue &&
                                 client.SubscriptionEndDate.HasValue &&
                                 client.SubscriptionEndDate.Value > DateTime.Now;
 
@@ -166,6 +190,12 @@ namespace Application.Services
                 }
             }
 
+            // Fix Bug 1: IsActive in the response represents PLAN status, not account status.
+            // This ensures CreatePreference() sees the correct value when calculating proration.
+            var isPlanActive = client.Id_Plan.HasValue &&
+                               client.SubscriptionEndDate.HasValue &&
+                               client.SubscriptionEndDate.Value > DateTime.Now;
+
             return new ClientPlanResponse
             {
                 PlanId = client.Id_Plan,
@@ -175,7 +205,7 @@ namespace Application.Services
                 PlanIsUnlimited = planIsUnlimited,
                 PlanBenefits = planBenefits,
                 ClassesRemaining = classesRemaining,
-                IsActive = client.IsActive,
+                IsActive = isPlanActive,
                 SubscriptionStartDate = client.SubscriptionStartDate,
                 SubscriptionEndDate = client.SubscriptionEndDate,
             };
