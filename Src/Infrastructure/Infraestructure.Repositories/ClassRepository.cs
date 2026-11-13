@@ -1,4 +1,4 @@
-﻿using Domain.Entity;
+using Domain.Entity;
 using Domain.Interface;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +14,8 @@ namespace Infrastructure.Repositories
         public override async Task<IEnumerable<Class>> GetAll()
         {
             return await _context.Classes
-                .Include(c => c.Schedules.Where(s => !s.IsDeleted)) 
+                .Include(c => c.Schedules.Where(s => !s.IsDeleted))
+                    .ThenInclude(s => s.Inscriptions)
                 .Where(c => !c.IsDeleted)
                 .ToListAsync();
         }
