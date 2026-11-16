@@ -1,4 +1,4 @@
-﻿using Application.Dtos.Request;
+using Application.Dtos.Request;
 using Application.Dtos.Responses;
 using Domain.Entity;
 
@@ -64,7 +64,7 @@ namespace Application.Mapper
         }
 
         // Método privado para calcular la próxima ocurrencia
-        private static DateTime GetNextOccurrence(Day dayOfWeek, TimeOnly startTime)
+        public static DateTime GetNextOccurrence(Day dayOfWeek, TimeOnly startTime)
         {
             var now = DateTime.Now;
 

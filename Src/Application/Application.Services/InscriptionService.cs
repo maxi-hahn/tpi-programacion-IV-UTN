@@ -1,4 +1,4 @@
-using Application.Dtos.Request;
+﻿using Application.Dtos.Request;
 using Application.Dtos.Responses;
 using Application.Interfaces;
 using Application.Mapper;
@@ -84,7 +84,7 @@ namespace Application.Services
                 };
 
             // 4. Calcular próxima ocurrencia
-            var classDate = GetNextOccurrence(selectedSchedule.DayOfWeek, selectedSchedule.StartTime);
+            var classDate = ScheduleMapper.GetNextOccurrence(selectedSchedule.DayOfWeek, selectedSchedule.StartTime);
 
             // NUEVO: Validar que la clase no haya pasado
             if (classDate < DateTime.Now)
@@ -393,33 +393,6 @@ namespace Application.Services
             };
         }
 
-        // Método privado para calcular la próxima ocurrencia
-        private DateTime GetNextOccurrence(Day dayOfWeek, TimeOnly startTime)
-        {
-            var now = DateTime.Now;
 
-            DayOfWeek targetDayOfWeek = dayOfWeek switch
-            {
-                Day.Lunes => DayOfWeek.Monday,
-                Day.Martes => DayOfWeek.Tuesday,
-                Day.Miercoles => DayOfWeek.Wednesday,
-                Day.Jueves => DayOfWeek.Thursday,
-                Day.Viernes => DayOfWeek.Friday,
-                Day.Sabado => DayOfWeek.Saturday,
-                Day.Domingo => DayOfWeek.Sunday,
-                _ => DayOfWeek.Monday
-            };
-
-            var currentDay = now.DayOfWeek;
-            var daysUntilTarget = ((int)targetDayOfWeek - (int)currentDay + 7) % 7;
-            var nextDate = now.Date.AddDays(daysUntilTarget);
-
-            if (daysUntilTarget == 0 && now.TimeOfDay > startTime.ToTimeSpan())
-            {
-                nextDate = nextDate.AddDays(7);
-            }
-
-            return nextDate.Add(startTime.ToTimeSpan());
-        }
     }
 }

@@ -1,4 +1,4 @@
-using Domain.Entity;
+﻿using Domain.Entity;
 using Domain.Interface;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,9 +23,8 @@ namespace Infrastructure.Repositories
             return await _context.Inscriptions
                 .Include(i => i.Class)
                 .Include(i => i.Schedule)
-                .Where(i => i.UserId == userId &&
-                            i.IsActive &&
-                            i.ClassDate >= DateTime.Now)  // Solo futuras
+                .Where(i => i.UserId == userId)
+                .OrderByDescending(i => i.ClassDate)
                 .ToListAsync();
         }
 
